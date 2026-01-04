@@ -16,10 +16,10 @@ Considering this and the quality of the work, the grades for the course will be 
 
 ## Resources
 Message-passing interfaces and protocols used in scientific software: 
-[https://www.open-mpi.org/ ](open-mpi.org/) - Industry-standard implementation of the message-passing interface (MPI) protocol 
-[https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-6-0.pdf](OpenMP-API-Specification-6-0) - Heterogeneous computing API
+- [https://www.open-mpi.org/ ](open-mpi.org/) - Industry-standard implementation of the message-passing interface (MPI) protocol
+- [https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-6-0.pdf](OpenMP-API-Specification-6-0) - Heterogeneous computing API
 
 Tools:
-[https://kitware.github.io/paraview-catalyst/guide/concepts.html](Pareview) - open-source software framework for simulations with in situ visualization and analysis capabilities
-[https://kernel.dk/io_uring.pdf](IOuring) - Efficient IO with io_uring
-[https://github.com/schlad/liburing](liburing) - Library providing helpers for the Linux kernel io_uring support
+- [https://kitware.github.io/paraview-catalyst/guide/concepts.html](Pareview) - open-source software framework for simulations with in situ visualization and analysis capabilities
+- [https://kernel.dk/io_uring.pdf](IOuring) - Efficient IO with io_uring
+- [https://github.com/schlad/liburing](liburing) - Library providing helpers for the Linux kernel io_uring support
