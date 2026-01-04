@@ -1,5 +1,5 @@
 # Communication in Distributed Architecture
-##Course Description: 
+## Course Description: 
 An  engineering  software  tool  is  being  developed  called  Stage2  with  an  architecture  that  connects 
 high-performance  simulation  tools  at  the  geometry  level.  Important  to  the  concept  of  Stage2  is  the 
 ability  to  widely  connect  external  applications  together  and  to  Stage2's  execution  pipeline.  This 
