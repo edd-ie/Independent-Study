@@ -1,0 +1,122 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{listings} % For C code snippets
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{cite}
+
+% --- Code Style Settings ---
+\lstset{
+	language=C,
+	basicstyle=\ttfamily\small,
+	breaklines=true,
+	frame=single,
+	captionpos=b
+}
+
+% --- Document Info ---
+\title{Communication in Distributed Architecture \\ \large Optimizing Point-to-Point Data Transfer Throughput}
+\author{Eddie Odiwuor Ogendo}
+\date{\today}
+
+\begin{document}
+	
+	\maketitle
+	
+	\begin{abstract}
+		This research investigates the upper limits of data transfer rates between  two point nodes. The primary objective is to evaluate the impact of different communication protocols, message sizes, and Modular Component Architecture (MCA) tuning on total bandwidth and latency.
+	\end{abstract}
+	
+	\tableofcontents
+	
+	\newpage
+	
+	% --- Section 1: Introduction ---
+	\section{Introduction}
+	\label{sec:intro}
+	Detailed overview of the data movement problem in distributed systems.
+	\subsection{Problem Statement}
+	Focus on the "Two-Node Bottleneck" and theoretical peak vs. achieved performance.
+	\subsection{Motivation}
+	Why moving data at wire-speed is critical for [insert your specific use case, e.g., CFD, Climate Modeling, or Big Data].
+	
+	% --- Section 2: Technical Background ---
+	\section{Technical Background}
+	\label{sec:background}
+	\subsection{The OpenMPI Architecture}
+	Briefly explain the Modular Component Architecture (MCA) and the Point-to-Point Management Layer (PML).
+	\subsection{Interconnect Technologies}
+	Technical specifications of the hardware used (e.g., InfiniBand EDR, 100GbE, RoCE).
+	\subsection{Communication Protocols}
+	Distinguish between the Eager and Rendezvous protocols and their impact on throughput.
+	
+	% --- Section 3: Experimental Methodology ---
+	\section{Experimental Methodology}
+	\label{sec:methodology}
+	
+	\subsection{Hardware Setup}
+	Describe the CPU, RAM, and NIC (Network Interface Card) of the two nodes.
+	
+	\subsection{Software Environment}
+	The software stack was selected to ensure high-performance execution and minimal overhead during point-to-point data transfers. The environment is detailed as follows:
+	
+	\begin{itemize} 
+		\item \textbf{Operating System:} The experiments were conducted on a Windows Subsystem for Linux running \texttt{Ubuntu 24.04.3 LTS} with the \textbf{Kernel version 6.6.87.2-microsoft-standard-WSL2}. To ensure maximum throughput, we verified that \texttt{sysctl} parameters for TCP/IP (such as \texttt{net.core.rmem\_max} and \texttt{net.core.wmem\_max}) were tuned to support large window sizes for high-bandwidth networks.
+		
+		\item \textbf{MPI Implementation:} We utilized \textbf{OpenMPI v5.0.9} (stable). The library was built with \texttt{UCX} (Unified Communication X) support to leverage RDMA capabilities for the underlying InfiniBand/RoCE interconnect. The Modular Component Architecture (MCA) was configured at runtime to prioritize the \texttt{btl\_openib} and \texttt{pml\_ucx} components for optimal hardware saturation.
+		
+		\item \textbf{Compiler and Flags:} All C source files were compiled using the \textbf{GCC 14.2.0} suite. To achieve "wire-speed" performance and ensure the CPU does not become the bottleneck during data packing/unpacking, the following optimization flags were applied:
+		\begin{itemize}
+			\item \texttt{-O3}: Enables aggressive code optimizations including loop vectorization.
+			\item \texttt{-march=native}: Instructs the compiler to generate instructions specific to the host CPU architecture (e.g., AVX-512).
+			\item \texttt{-mtune=native}: Optimizes the generated code for the local processor's pipeline.
+			\item \texttt{-ffast-math}: Relaxes some strict IEEE floating-point compliance to further speed up arithmetic during data processing.
+		\end{itemize}
+	\end{itemize}
+	.
+	\subsection{Benchmark Design}
+	Description of the Ping-Pong benchmark logic using \texttt{MPI\_Send} and \texttt{MPI\_Recv}.
+	
+	% --- Section 4: Performance Optimization Strategies ---
+	\section{Optimization Strategies}
+	\label{sec:optimization}
+	\subsection{Non-Blocking Communication}
+	Implementation of \texttt{MPI\_Isend} and \texttt{MPI\_Irecv} to hide latency.
+	\subsection{Remote Memory Access (RMA)}
+	One-sided communication using \texttt{MPI\_Put} and \texttt{MPI\_Get}.
+	\subsection{MCA Parameter Tuning}
+	Analysis of specific runtime flags like \texttt{btl\_openib\_eager\_limit} and \texttt{pml\_ucx}.
+	
+	% --- Section 5: Results and Analysis ---
+	\section{Results and Analysis}
+	\label{sec:results}
+	\subsection{Bandwidth Analysis}
+	Present the bandwidth curve relative to message size.
+	\subsection{Mathematical Performance Model}
+	The observed bandwidth $B(L)$ for a message of size $L$ is modeled as:
+	$$B(L) = \frac{L}{\alpha + \beta L}$$
+	Where $\alpha$ represents latency and $\beta$ represents the reciprocal of the peak bandwidth.
+	\subsection{Comparison of Protocols}
+	Graph comparing Blocking vs. Non-blocking vs. RMA.
+	
+	% --- Section 6: Conclusion ---
+	\section{Conclusion}
+	Summary of the most effective configuration and final throughput achieved.
+	
+	% --- Bibliography ---
+	\begin{thebibliography}{9}
+		\bibitem{openmpi} 
+		The Open MPI Project. \textit{Open MPI: A High Performance Message Passing Library}. https://www.open-mpi.org/
+		
+		\bibitem{https://www.youtube.com/watch?v=c0C9mQaxsD4} MPI Basics by Tom Nurkkalla. \textit{Introduction to distributed computing with MPI}. https://www.youtube.com/watch?v=c0C9mQaxsD4
+		
+		\bibitem{https://arcca.github.io/intro-mpi/} Introduction to Parallel Programming using MPI. https://arcca.github.io/intro-mpi/
+	\end{thebibliography}
+	
+	
+\end{document}
