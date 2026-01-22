@@ -1,0 +1,192 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{listings} % For C code snippets
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{cite}
+
+% --- Code Style Settings ---
+\lstset{
+	language=C,
+	basicstyle=\ttfamily\small,
+	breaklines=true,
+	frame=single,
+	captionpos=b
+}
+
+% --- Document Info ---
+\title{Communication in Distributed Architecture \\ \large Optimizing Point-to-Point Data Transfer Throughput}
+\author{Eddie Odiwuor Ogendo}
+\date{\today}
+
+\begin{document}
+	
+	\maketitle
+	
+	\begin{abstract}
+		This research investigates the upper limits of data transfer rates between  two point nodes. The primary objective is to evaluate the impact of different communication protocols, message sizes, and Modular Component Architecture (MCA) tuning on total bandwidth and latency.
+	\end{abstract}
+	
+	\tableofcontents
+	
+	\newpage
+	
+	% --- Section 1: Introduction ---
+	\section{Introduction}
+	\label{sec:intro}
+	The purpose of this research is to learn about the complexity of  data movement problem in distributed systems. 
+	\\Optimizing data transfer between two nodes involves minimizing the overhead introduced by the operating system, the network stack, and the physical limitations of the hardware.
+	\\\\The research will be structured in terms of these core concepts
+	
+	\begin{itemize} 
+		\item \textbf{High Performance Parallelism:} Message Passing Interface, point-to-point vs Collective communication.
+		
+		\item \textbf{Networking Foundations:} TCP/IP stack, Network fallacies, Chunking and Retries.
+		
+		\item \textbf{Kernel-level optimization:} io\_uring, ktls (Kernel TLS) and zero-copy techniques.
+		
+		\item \textbf{Synthesis \& Benchmarking:} Building the Broadcaster and measuring throughput vs latency.
+	\end{itemize}
+	
+	
+	% --- Section 2: High Performance Parallelism ---
+	\section{High Performance Parallelism}
+	\label{sec:background}
+	\subsection{Message Passing Interface (MPI)}
+	Industry standard specification used for communication between processes in parallel computing
+	\\\\MPI attempts to solve the following problems:
+	
+	\begin{itemize} 
+		\item \textbf{Portability:}
+		\\Each vendor had propriety library for message passing thus requiring rewrites for different use cases.
+		\\\textbf{Solution} - \textit{MPI} provides a standard API provided an MPI is installed (OpenMPI, MPICH)
+		
+		\item \textbf{Memory wall (\textit{Distributed Memory Management}):}
+		\\Most large scale computers are distributed memory systems. Moving data between isolated memory manually is complex and error-prone.
+		\\\textbf{Solution} - \textit{MPI} treats communication as explicit messages. \textit{MPI} uses objects called \textit{communicators} 
+		and \textit{groups} to define which collection of processes may 
+		communicate with each other. 
+		\\\\Provides functions that handle networking, buffering and memory copying.
+		\begin{itemize}
+			\item\textbf{Sender}: A process calls \textit{MPI\_Send()} (or a variant) to transmit a message.
+			\item\textbf{Receiver}: A process calls \textit{MPI\_Recv()} to accept the message.
+			\item\textbf{Message Envelope}: Data buffer (address, type, count), Sou5rce/destination ranks, Message tag, Communicator (\textit{MPI\_COMM\_WORLD} by default)
+		\end{itemize}
+		
+		\item \textbf{Complexity of collective operations:}
+		\\ Parallel algorithms often send pieces of data or collects results from multiple end points. 
+		\\Writing \textit{one-to-many} or \textit{many-to-one} patterns is tedious and usually inefficient.
+		\\\\\textbf{Solution} - \textit{MPI} provides collective communication through built in functions.
+		\begin{itemize}
+			\item \textbf{Broadcaster} - sends data from one process to all.
+			\item \textbf{Scatter/Gather} - Splitting a large vector into chunks for different processes or reassembling them.
+			\item \textbf{Reduction} -  performing calculations across all processors and return a single result.
+		\end{itemize}
+		
+		\item \textbf{Hardware heterogeneity:}
+		\\Computing clusters consists of different machines with different architecture e.g \textit{big/little endian}.
+		\\\textbf{Solution} - MPI uses opaque datatypes and handles translation between different machines e.g. \textit{(4, MPI\_INT) a vector with 4 integer values}
+		
+	\end{itemize}
+	
+	\subsection{The OpenMPI Architecture}
+	Briefly explain the Modular Component Architecture (MCA) and the Point-to-Point Management Layer (PML).
+	\subsection{Interconnect Technologies}
+	Technical specifications of the hardware used (e.g., InfiniBand EDR, 100GbE, RoCE).
+	\subsection{Communication Protocols}
+	Distinguish between the Eager and Rendezvous protocols and their impact on throughput.
+	
+	% --- Section 3: Networking Foundation ---
+	\section{Networking Foundation}
+	\label{sec:background}
+	\subsection{TCP/IP Stack}
+	
+	% --- Section 4: Kernel-level Optimization ---
+	\section{Kernel-level Optimization}
+	\label{sec:background}
+	\subsection{IO uring}
+	
+	\subsection{Kernel TLS (KTLS)}
+	
+	% --- Section 5: Synthesis & Benchmarking ---
+	\section{Synthesis \& Benchmarking}
+	\label{sec:background}
+	\subsection{Broadcaster}
+	
+	
+	
+	% --- Section 6: Experimental Methodology ---
+	\section{Experimental Methodology}
+	\label{sec:methodology}
+	
+	\subsection{Hardware Setup}
+	Describe the CPU, RAM, and NIC (Network Interface Card) of the two nodes.
+	
+	\subsection{Software Environment}
+	The software stack was selected to ensure high-performance execution and minimal overhead during point-to-point data transfers. The environment is detailed as follows:
+	
+	\subsection{Software Environment}
+	The software stack was selected to ensure high-performance execution and minimal overhead during point-to-point data transfers. The environment is detailed as follows:
+	
+	\begin{itemize} 
+		\item \textbf{Operating System:} The experiments were conducted on a Windows Subsystem for Linux running \texttt{Ubuntu 24.04.3 LTS} with the \textbf{Kernel version 6.6.87.2-microsoft-standard-WSL2}. To ensure maximum throughput, we verified that \texttt{sysctl} parameters for TCP/IP (such as \texttt{net.core.rmem\_max} and \texttt{net.core.wmem\_max}) were tuned to support large window sizes for high-bandwidth networks.
+		
+		\item \textbf{MPI Implementation:} We utilized \textbf{Open MPI v5.0.9}. The library was built against external \textbf{PMIx v5.0.9} and \textbf{PRRTE v3.0.12} dependencies to ensure a modern, modular process management layer. For intra-node communication within the WSL2 environment, the Modular Component Architecture (MCA) was verified to prioritize the \texttt{sm} (shared memory) and \texttt{self} Byte Transport Layers (BTL). This configuration enables low-latency, high-bandwidth data movement via shared memory regions, bypassing the network stack for local processes. Additionally, the \texttt{tcp} BTL was configured for management and coordination across the virtualized network interface.
+		
+		\item \textbf{Runtime Infrastructure:} To support the Open MPI 5.0 modular architecture, we deployed the \textbf{PMIx (Process Management Interface Exascale) v5.0.9} and \textbf{PRRTE (PMIx Reference RunTime Environment) v3.0.12} frameworks. These components were manually compiled and linked to provide a robust distributed process management layer, facilitating efficient process wire-up and synchronization during the \texttt{MPI\_Init} phase.
+		
+		\item \textbf{Compiler and Flags:} All C source files were compiled using the \textbf{GCC 14.2.0} suite. To achieve "wire-speed" performance and ensure the CPU does not become the bottleneck during data packing/unpacking, the following optimization flags were applied:
+		\begin{itemize}
+			\item \texttt{-O3}: Enables aggressive code optimizations including loop vectorization.
+			\item \texttt{-march=native}: Instructs the compiler to generate instructions specific to the host CPU architecture.
+			\item \texttt{-mtune=native}: Optimizes the generated code for the local processor's pipeline.
+			\item \texttt{-ffast-math}: Relaxes some strict IEEE floating-point compliance to further speed up arithmetic during data processing.
+		\end{itemize}
+	\end{itemize}
+	.
+	\subsection{Benchmark Design}
+	Description of the Ping-Pong benchmark logic using \texttt{MPI\_Send} and \texttt{MPI\_Recv}.
+	
+	% --- Section 4: Performance Optimization Strategies ---
+	\section{Optimization Strategies}
+	\label{sec:optimization}
+	\subsection{Non-Blocking Communication}
+	Implementation of \texttt{MPI\_Isend} and \texttt{MPI\_Irecv} to hide latency.
+	\subsection{Remote Memory Access (RMA)}
+	One-sided communication using \texttt{MPI\_Put} and \texttt{MPI\_Get}.
+	\subsection{MCA Parameter Tuning}
+	Analysis of specific runtime flags like \texttt{btl\_openib\_eager\_limit} and \texttt{pml\_ucx}.
+	
+	% --- Section 5: Results and Analysis ---
+	\section{Results and Analysis}
+	\label{sec:results}
+	\subsection{Bandwidth Analysis}
+	Present the bandwidth curve relative to message size.
+	\subsection{Mathematical Performance Model}
+	The observed bandwidth $B(L)$ for a message of size $L$ is modeled as:
+	$$B(L) = \frac{L}{\alpha + \beta L}$$
+	Where $\alpha$ represents latency and $\beta$ represents the reciprocal of the peak bandwidth.
+	\subsection{Comparison of Protocols}
+	Graph comparing Blocking vs. Non-blocking vs. RMA.
+	
+	% --- Section 6: Conclusion ---
+	\section{Conclusion}
+	Summary of the most effective configuration and final throughput achieved.
+	
+	% --- Bibliography ---
+	\begin{thebibliography}{9}
+		\bibitem{openmpi} 
+		The Open MPI Project. \textit{Open MPI: A High Performance Message Passing Library}. https://www.open-mpi.org/
+		
+		\bibitem{https://www.youtube.com/watch?v=c0C9mQaxsD4} MPI Basics by Tom Nurkkalla. \textit{Introduction to distributed computing with MPI}. https://www.youtube.com/watch?v=c0C9mQaxsD4
+		
+		\bibitem{https://arcca.github.io/intro-mpi/} Introduction to Parallel Programming using MPI. https://arcca.github.io/intro-mpi/
+	\end{thebibliography}
+	
+	
+\end{document}

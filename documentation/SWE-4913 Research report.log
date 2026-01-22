@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.16)  18 JAN 2026 18:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  22 JAN 2026 13:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -340,7 +340,17 @@ File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count318
-) (SWE-4913 Research report.aux)
+) (SWE-4913 Research report.aux
+
+LaTeX Warning: Label `sec:background' multiply defined.
+
+
+LaTeX Warning: Label `sec:background' multiply defined.
+
+
+LaTeX Warning: Label `sec:background' multiply defined.
+
+)
 \openout1 = `"SWE-4913 Research report.aux"'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
@@ -435,43 +445,74 @@ Package hyperref Info: Link coloring OFF on input line 27.
 
  [1
 
-{C:/Users/_edd.ie_/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}] [2]
-Underfull \hbox (badness 2884) in paragraph at lines 116--117
+{C:/Users/_edd.ie_/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
+Underfull \hbox (badness 10000) in paragraph at lines 42--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--85
+
+ []
+
+[2] [3] [4]
+Underfull \hbox (badness 2884) in paragraph at lines 186--187
 []\OT1/cmr/m/n/10.95 MPI Ba-sics by Tom Nurkkalla. \OT1/cmr/m/it/10.95 In-tro-d
 uc-tion to dis-tributed com-put-ing with MPI\OT1/cmr/m/n/10.95 .
  []
 
-[3] [4] (SWE-4913 Research report.aux)
+[5] (SWE-4913 Research report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-29>
  ***********
-Package rerunfilecheck Info: File `"SWE-4913 Research report".out' has not chan
-ged.
-(rerunfilecheck)             Checksum: 61588E84005AD8FCE0A280AECABD1B1F;3150.
+
+
+LaTeX Warning: There were multiply-defined labels.
+
+
+Package rerunfilecheck Warning: File `"SWE-4913 Research report".out' has chang
+ed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `"SWE-4913 Research report".out':
+(rerunfilecheck)             Before: 7BF5887995A793CF7DE20979B65840FC;4154
+(rerunfilecheck)             After:  8107DB9098035CB501501D57CABDDDFF;4315.
  ) 
 Here is how much of TeX's memory you used:
- 11171 strings out of 467870
- 172720 string characters out of 5416903
- 778434 words of memory out of 5000000
- 39905 multiletter control sequences out of 15000+600000
- 634953 words of font info for 65 fonts, out of 8000000 for 9000
+ 11187 strings out of 467870
+ 172917 string characters out of 5416903
+ 781434 words of memory out of 5000000
+ 39912 multiletter control sequences out of 15000+600000
+ 635312 words of font info for 66 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,489b,585s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,765b,588s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\_edd.ie_\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\t
 crm1095.pk><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/
 amsfonts/cm/cmbx10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/t
 ype1/public/amsfonts/cm/cmbx12.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/_edd.ie_/AppData/Local
-/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/_edd.ie_/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/
-_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb
-><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
-m/cmti10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/amsfonts/cm/cmtt10.pfb>
-Output written on "SWE-4913 Research report.pdf" (4 pages, 152936 bytes).
+KTeX/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><C:/Users/_edd.ie_/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/_edd.ie_
+/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Use
+rs/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.
+pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfont
+s/cm/cmr17.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fon
+ts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on "SWE-4913 Research report.pdf" (5 pages, 179687 bytes).
 PDF statistics:
- 179 PDF objects out of 1000 (max. 8388607)
- 30 named destinations out of 1000 (max. 500000)
- 161 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 223 PDF objects out of 1000 (max. 8388607)
+ 38 named destinations out of 1000 (max. 500000)
+ 209 words of extra memory for PDF output out of 10000 (max. 10000000)
 

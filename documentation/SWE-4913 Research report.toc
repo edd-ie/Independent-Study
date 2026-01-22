@@ -1,0 +1,27 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {section}{\numberline {2}High Performance Parallelism}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Message Passing Interface (MPI)}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}The OpenMPI Architecture}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Interconnect Technologies}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Communication Protocols}{3}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Networking Foundation}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}TCP/IP Stack}{3}{subsection.3.1}%
+\contentsline {section}{\numberline {4}Kernel-level Optimization}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}IO uring}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Kernel TLS (KTLS)}{3}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Synthesis \& Benchmarking}{3}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Broadcaster}{3}{subsection.5.1}%
+\contentsline {section}{\numberline {6}Experimental Methodology}{3}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Hardware Setup}{3}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Software Environment}{3}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Software Environment}{3}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Benchmark Design}{4}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Optimization Strategies}{4}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Non-Blocking Communication}{4}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Remote Memory Access (RMA)}{4}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}MCA Parameter Tuning}{4}{subsection.7.3}%
+\contentsline {section}{\numberline {8}Results and Analysis}{5}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Bandwidth Analysis}{5}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Mathematical Performance Model}{5}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Comparison of Protocols}{5}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Conclusion}{5}{section.9}%
