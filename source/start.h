@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void commTest(const int rank, const int num_proc, const int * const  recv, const int tag, const MPI_Status *const msg)
+void commTest(const int rank, const int num_proc, int * const  recv, const int tag, MPI_Status *const msg)
 {
     const int rank_next = (rank + 1) % num_proc;
     const int rank_prev = rank == 0 ? num_proc - 1 : rank - 1;
