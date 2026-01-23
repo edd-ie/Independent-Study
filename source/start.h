@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void commTest(int rank, int num_proc, int *recv, int tag, MPI_Status *msg)
+void commTest(const int rank, const int num_proc, const int * const  recv, const int tag, const MPI_Status *const msg)
 {
-    int rank_next = (rank + 1) % num_proc;
-    int rank_prev = rank == 0 ? num_proc - 1 : rank - 1;
+    const int rank_next = (rank + 1) % num_proc;
+    const int rank_prev = rank == 0 ? num_proc - 1 : rank - 1;
 
     srandom(rank + 33);
     int value = random() % 100;
