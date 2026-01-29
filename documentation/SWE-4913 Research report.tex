@@ -9,14 +9,22 @@
 \usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{cite}
+\usepackage{listings}
+\usepackage{xcolor}
+
 
 % --- Code Style Settings ---
 \lstset{
-	language=C,
+	language=C++,
 	basicstyle=\ttfamily\small,
 	breaklines=true,
 	frame=single,
-	captionpos=b
+	captionpos=b,
+	keywordstyle=\color{blue},
+	commentstyle=\color{green!50!black},
+	stringstyle=\color{orange},
+	numbers=left,
+	numberstyle=\tiny\color{gray}
 }
 
 % --- Document Info ---
@@ -94,17 +102,110 @@
 		
 	\end{itemize}
 	
-	\subsection{The OpenMPI Architecture}
+	\subsubsection{The OpenMPI Architecture}
 	Briefly explain the Modular Component Architecture (MCA) and the Point-to-Point Management Layer (PML).
-	\subsection{Interconnect Technologies}
+	\subsubsection{Interconnect Technologies}
 	Technical specifications of the hardware used (e.g., InfiniBand EDR, 100GbE, RoCE).
-	\subsection{Communication Protocols}
+	\subsubsection{Communication Protocols}
 	Distinguish between the Eager and Rendezvous protocols and their impact on throughput.
+	
+	\label{sec:background}
+	\subsection{Open Multi-Processing (OpenMP)}
+	An application programming interface (API) that supports multi-platform shared-memory multiprocessing programming in C, C++, and Fortran. 
+	It allows developers to write parallel code easily and efficiently by adding simple compiler directives to their existing code.
+	\\\\Utilizes the \textbf{Pragma} directive to allow the compiler to run the code sequentially if it doesn't support \textit{OpenMP}.
+	
+	\begin{lstlisting}
+		#pragma omp [construct] [clause]
+	\end{lstlisting}
+	
+	
 	
 	% --- Section 3: Networking Foundation ---
 	\section{Networking Foundation}
 	\label{sec:background}
-	\subsection{TCP/IP Stack}
+	\subsection{Resumable/Partial downloads}
+	To support \textbf{Partial / Resumable downloads} they need to be supported by the server(sender).
+	
+	\subsubsection{Accept-Range}
+	Indicates if a server accepts range requests
+	\begin{lstlisting}
+		Accept-Range: none
+		Accept-Range: <unit> // e.g. bytes
+	\end{lstlisting}
+	
+	
+	\subsubsection{Range}
+	Indicates what part of a resource that the server should return
+	\\Status code:
+	\begin{itemize}
+		\item \textbf{206} : \textit{Partial content}, server can send the request.
+		\item \textbf{416} : \textit{Range not satisfiable}, ranges are invalid.
+		\item \textbf{200} : Server doesn't support range request or request ignored
+	\end{itemize}
+	The header requests one or more subranges of selected data, \textit{similar to skips in audio or video}.
+	\begin{lstlisting}
+		Range: <unit>=<start-end>
+		Range: <unit>=<n->		// start from chunk n till the end
+		Range: <unit>=<-n>		// select the last n chunks	
+		Range: <unit>=<start-end>, <start-end>, <start-end>  // select multiple chunks from different position
+		Range: <unit>=<start-end>, <-end>
+	\end{lstlisting}
+	
+	\subsubsection{Content-Range}
+	Indicates where the content of a response belongs in relation to a complete resource
+	\begin{lstlisting}
+		Content-Range: <unit> <range>/<size>  // status : 206
+		Content-Range: <unit> <range>\*	 // Length unknown
+		Content-Range: <unit> *\<size>	// 416 : not in range
+	\end{lstlisting}
+	Server service requests in order but may reorder ranges in sequential order in order to not buffer an entire response on disk
+	
+	\subsubsection{If-range}
+	Makes range requests conditional, \textbf{206}=\textit{fulfilled} and \textbf{200}=\textit{ignored}.
+	\\Header can use either \textit{last-modified} or \textit{Etag} but not both. It can be used to check for change since last download.
+	
+	
+	\label{sec:background}
+	\subsection{Resumable/Multipart Uploads}
+	The process involve breaking a large file into smaller chunks and sending the individually.
+	\\\\\textbf{Resumability} is achieved by tracking which chunk have been successfully acknowledged by the server.
+	\\If a receiver fails, sender only sends the missing chunks instead of the entire file
+	
+	\label{sec:background}
+	\subsubsection{Stages}
+	\textbf{Initiation:}
+	\\Sender sends a post request to the receiver(s) to start an upload.
+	\\Receiver returns a unique \textit{upload-id} and prepares storage for incoming parts
+	\\\\\textbf{Part upload:}
+	\\File is sliced into chunks each uploaded with a \textit{part-number, upload-id}
+	\\\\\textbf{Finalization:}
+	\\Once all parts are uploaded, sender sends a completion request listing all \textit{Etags}.
+	\\Receiver stitches all pieces together and send a confirmation.
+	
+	\label{sec:background}
+	\subsubsection{Advantages}
+	\textbf{Parallel streams} - sender open 4-8 concurrent http connections to upload different parts fully utilizing available bandwidth.
+	\\\textbf{Memory efficiency} - remove need of loading large amount of data in ram, sliced small chunks keeps memory footprint low.
+	\\\textbf{Error isolation} - failure doesn't affect the whole upload process just the slice.
+	
+	\label{sec:background}
+	\subsubsection{Best practises}
+	\textbf{Exponential backoff:}
+	\\If a part fails, don't retry immediately have increasing wait times before next trial (\textit{1s - 2s - 3s}) as a form of network congestion control.
+	\\\\\textbf{MD5 validation:}
+	\\Always send a MD5 header with each part, it lets the receiver verify the integrity before acknowledging.
+	\\\\\textbf{Cleanup process:}
+	\\Add lifecycle rules to deal with unfinished uploads(e.g. delete) after a specified time period.
+	\\\\\textbf{Dynamic chunking:}
+	\\Adjust chunk size based on network speed; \textit{5MB(mobile), 25MB(Fibre)}.
+	
+	\label{sec:background}
+	\subsubsection{Standard protocols}
+	\begin{itemize}
+		\item AWS S3 Multipart.
+		\item tus.io
+	\end{itemize} 
 	
 	% --- Section 4: Kernel-level Optimization ---
 	\section{Kernel-level Optimization}
