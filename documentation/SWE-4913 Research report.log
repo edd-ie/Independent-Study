@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  29 JAN 2026 13:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  1 FEB 2026 21:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -393,6 +393,9 @@ LaTeX Warning: Label `sec:background' multiply defined.
 
 LaTeX Warning: Label `sec:background' multiply defined.
 
+
+LaTeX Warning: Label `sec:background' multiply defined.
+
 )
 \openout1 = `"SWE-4913 Research report.aux"'.
 
@@ -508,48 +511,58 @@ Underfull \hbox (badness 10000) in paragraph at lines 89--93
 
  []
 
-[3]
-Underfull \hbox (badness 10000) in paragraph at lines 114--117
-
- []
-
-[4]
-Underfull \hbox (badness 10000) in paragraph at lines 171--174
+[3] [4]
+Underfull \hbox (badness 10000) in paragraph at lines 142--145
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 177--185
-
+Underfull \hbox (badness 10000) in paragraph at lines 159--159
+[]\OT1/cmr/m/n/10.95 Supports par-al-lel com-pu-ta-tion for
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 177--185
-
+Underfull \hbox (badness 2547) in paragraph at lines 159--159
+\OT1/cmr/m/n/10.95 distributed-memory and shared-memory
  []
 
 [5]
-Underfull \hbox (badness 10000) in paragraph at lines 194--202
+Underfull \hbox (badness 10000) in paragraph at lines 215--218
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 194--202
+Underfull \hbox (badness 10000) in paragraph at lines 221--229
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 194--202
+Underfull \hbox (badness 10000) in paragraph at lines 221--229
 
  []
 
-[6] [7]
-Underfull \hbox (badness 1715) in paragraph at lines 287--288
+[6]
+Underfull \hbox (badness 10000) in paragraph at lines 238--246
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 238--246
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 238--246
+
+ []
+
+[7] [8]
+Underfull \hbox (badness 1715) in paragraph at lines 331--332
 []\OT1/cmr/m/n/10.95 MPI Ba-sics by Tom Nurkkalla. In-tro-duc-tion to dis-tribu
 ted com-put-ing with MPI.
  []
 
-[8] (SWE-4913 Research report.aux)
+[9] [10] (SWE-4913 Research report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-29>
@@ -560,16 +573,16 @@ LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `"SWE-4913 Research report".out' has not chan
 ged.
-(rerunfilecheck)             Checksum: 7A910375C23B8734699973D75471D34A;5816.
+(rerunfilecheck)             Checksum: 03C1BDCBE2DECE9467E35AAB61212CF2;5855.
  ) 
 Here is how much of TeX's memory you used:
- 12090 strings out of 467870
- 184000 string characters out of 5416903
- 900621 words of memory out of 5000000
- 40775 multiletter control sequences out of 15000+600000
+ 12135 strings out of 467870
+ 184587 string characters out of 5416903
+ 992621 words of memory out of 5000000
+ 40805 multiletter control sequences out of 15000+600000
  635480 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,765b,1250s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,765b,2093s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\_edd.ie_\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\t
 crm1095.pk><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/
 amsfonts/cm/cmbx10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/t
@@ -583,9 +596,9 @@ s/cm/cmr17.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/pub
 lic/amsfonts/cm/cmr6.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts
 /type1/public/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/
 MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on "SWE-4913 Research report.pdf" (8 pages, 212116 bytes).
+Output written on "SWE-4913 Research report.pdf" (10 pages, 223176 bytes).
 PDF statistics:
- 317 PDF objects out of 1000 (max. 8388607)
- 67 named destinations out of 1000 (max. 500000)
+ 341 PDF objects out of 1000 (max. 8388607)
+ 82 named destinations out of 1000 (max. 500000)
  297 words of extra memory for PDF output out of 10000 (max. 10000000)
 

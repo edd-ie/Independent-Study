@@ -103,11 +103,39 @@
 	\end{itemize}
 	
 	\subsubsection{The OpenMPI Architecture}
-	Briefly explain the Modular Component Architecture (MCA) and the Point-to-Point Management Layer (PML).
-	\subsubsection{Interconnect Technologies}
-	Technical specifications of the hardware used (e.g., InfiniBand EDR, 100GbE, RoCE).
+	OpenMPI is base on the Modular Component Architecture is a system that breaks down a software into independent, interchangeable modules, each encapsulating specific functionality. It is a series of projects, frameworks, components, and modules that are assembled at run-time to create an \textit{MPI} implementation.
+	\\Each framework typically has one or more components that are used at run-time. \textbf{Point-to-point Management} Layer sits between the \textit{MPI} API and the lower-level network transport layers. It manages message matching, ordering, and delivery guarantees required by the MPI standard. It decides how and through which transport a message will be sent. The \textbf{ucx} \textit{pml} sends messages across \textbf{InfiniBand-based networks}. 
+	\\The \textbf{btl} framework is used by the MPI layer to send bytes across different types underlying networks. The \textbf{tcp} \textit{btl}, for example, sends messages across TCP-based networks
+	
 	\subsubsection{Communication Protocols}
-	Distinguish between the Eager and Rendezvous protocols and their impact on throughput.
+	MPI provides three different communication methods that MPI processes can use to communicate with each other.
+	
+	\begin{itemize}
+		\item \textbf{Point-to-Point Communication} - the most used communication method. It involves the transfer of a message from one process to a particular process in the same communicator. MPI provides blocking (\textit{synchronous}) and non-blocking (\textit{asynchronous}) point-to-point communication. 
+		\\For the \textit{blocking} communication, an MPI process \textit{sends a message to another MPI process and waits until the receiving process completely and correctly receives the message} before it continues its work. 
+		\\On the other hand, a sending process using \textit{non-blocking} communication \textit{sends a message to another MPI process and continues its work without waiting} to ensure that the message has been correctly received by the receiving process.
+		
+		\item \textbf{Collective Communication} - a process broadcasts a message is to all processes in the same communicator including itself.
+		
+		\item \textbf{One-sided communication} - a process can directly access the memory space of another process without involving it.
+	\end{itemize}
+	
+	\begin{lstlisting}
+		/* Standard send in MPI. Behind the scenes, it will issue a buffered send MPI_Bsend or a synchronous send MPI_Ssend, based on whether the buffer attached contains enough free space for the message. */
+		int MPI_Send(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+		/* Asynchronous blocking send ('B' == buffered); it will block until a copy of the buffer passed is made. MPI will send the buffer copied at a later point */ 
+		int MPI_Bsend(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+		/* Synchronous blocking send; it will block until the recipient has received the message. Ensure the buffer and be used safely once MPI_Ssend return */
+		int MPI_Ssend(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+		/* Standard blocking send ('R' == ready); it will block until the recipient has received the message. Requires the recipient to have issued the corresponding receive routine (MPI_Recv or MPI_Irecv) before MPI_Rsend is invoked. */
+		int MPI_Rsend(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+	\end{lstlisting}
+	
+	
 	
 	\label{sec:background}
 	\subsection{Open Multi-Processing (OpenMP)}
@@ -120,20 +148,29 @@
 	\end{lstlisting}
 	
 	
+	\label{sec:background}
+	\subsection{Difference between MPI and OpenMP}
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|p{0.45\textwidth}|p{0.45\textwidth}|}
+			\hline
+			\textbf{MPI} & \textbf{OpenMP} \\ \hline
+			Supports parallel computation for distributed-memory and shared-memory systems. & Supports parallel computation for shared-memory systems only. \\ \hline
+			A process-based parallelism. & A thread-based parallelism. \\ \hline
+			Each process has its own memory space and executes independently from the other processes. & Threads share the same resources and access shared memory. \\ \hline
+			Processes exchange data by passing messages to each other. & There is no notion of message-passing. Threads access shared memory. \\ \hline
+			Process creation overhead occurs one time. & It depends on the implementation. More overhead can occur when creating threads to join a task. \\ \hline
+		\end{tabular}
+		\caption{Comparison between MPI and OpenMP}
+	\end{table}
+	
 	
 	% --- Section 3: Networking Foundation ---
 	\section{Networking Foundation}
 	\label{sec:background}
 	\subsection{Resumable/Partial downloads}
 	To support \textbf{Partial / Resumable downloads} they need to be supported by the server(sender).
-	
-	\subsubsection{Accept-Range}
-	Indicates if a server accepts range requests
-	\begin{lstlisting}
-		Accept-Range: none
-		Accept-Range: <unit> // e.g. bytes
-	\end{lstlisting}
-	
 	
 	\subsubsection{Range}
 	Indicates what part of a resource that the server should return
@@ -150,6 +187,13 @@
 		Range: <unit>=<-n>		// select the last n chunks	
 		Range: <unit>=<start-end>, <start-end>, <start-end>  // select multiple chunks from different position
 		Range: <unit>=<start-end>, <-end>
+	\end{lstlisting}
+	
+	\subsubsection{Accept-Range}
+	Indicates if a server accepts range requests
+	\begin{lstlisting}
+		Accept-Range: none
+		Accept-Range: <unit> // e.g. bytes
 	\end{lstlisting}
 	
 	\subsubsection{Content-Range}
@@ -198,7 +242,7 @@
 	\\\\\textbf{Cleanup process:}
 	\\Add lifecycle rules to deal with unfinished uploads(e.g. delete) after a specified time period.
 	\\\\\textbf{Dynamic chunking:}
-	\\Adjust chunk size based on network speed; \textit{5MB(mobile), 25MB(Fibre)}.
+	\\Adjust chunk size based on network resiliency; \textit{5MB(mobile), 25MB(Fibre)}.
 	
 	\label{sec:background}
 	\subsubsection{Standard protocols}
