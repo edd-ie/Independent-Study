@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  5 FEB 2026 12:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  5 FEB 2026 13:23
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -520,134 +520,151 @@ Underfull \hbox (badness 10000) in paragraph at lines 90--94
  []
 
 [3] [4]
-Underfull \hbox (badness 10000) in paragraph at lines 144--147
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 161--161
+Underfull \hbox (badness 10000) in paragraph at lines 151--151
 []\OT1/cmr/m/n/10.95 Supports par-al-lel com-pu-ta-tion for
  []
 
 
-Underfull \hbox (badness 2547) in paragraph at lines 161--161
+Underfull \hbox (badness 2547) in paragraph at lines 151--151
 \OT1/cmr/m/n/10.95 distributed-memory and shared-memory
  []
 
 
-LaTeX Warning: `h' float specifier changed to `ht'.
+Underfull \hbox (badness 10000) in paragraph at lines 144--160
 
-[5] [6]
-Underfull \hbox (badness 10000) in paragraph at lines 227--232
+ []
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 170--174
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 236--238
+Underfull \hbox (badness 10000) in paragraph at lines 170--174
+
+ []
+
+[6] [7]
+Underfull \hbox (badness 10000) in paragraph at lines 238--243
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 250--261
+Underfull \hbox (badness 10000) in paragraph at lines 247--249
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 250--261
-
- []
-
-[7]
-Underfull \hbox (badness 10000) in paragraph at lines 264--272
+Underfull \hbox (badness 10000) in paragraph at lines 261--272
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 264--272
+Underfull \hbox (badness 10000) in paragraph at lines 261--272
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 274--281
+Underfull \hbox (badness 10000) in paragraph at lines 275--283
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 274--281
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 274--281
+Underfull \hbox (badness 10000) in paragraph at lines 275--283
 
  []
 
 [8]
-Underfull \hbox (badness 1383) in paragraph at lines 349--350
-[]\OT1/cmr/m/n/10.95 Dynamic and can fluc-tu-ate over
+Underfull \hbox (badness 10000) in paragraph at lines 285--292
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 285--292
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 285--292
+
  []
 
 [9]
-<media/jitter.jpg, id=298, 895.84688pt x 278.54062pt>
+Underfull \hbox (badness 1383) in paragraph at lines 360--361
+[]\OT1/cmr/m/n/10.95 Dynamic and can fluc-tu-ate over
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<media/jitter.jpg, id=300, 895.84688pt x 278.54062pt>
 File: media/jitter.jpg Graphic file (type jpg)
 <use media/jitter.jpg>
-Package pdftex.def Info: media/jitter.jpg  used on input line 358.
+Package pdftex.def Info: media/jitter.jpg  used on input line 370.
 (pdftex.def)             Requested size: 362.37569pt x 112.66808pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 365--367
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 377--379
 
  []
 
-<media/CAP.png, id=299, 250.9375pt x 249.93375pt>
+[10]
+<media/CAP.png, id=308, 250.9375pt x 249.93375pt>
 File: media/CAP.png Graphic file (type png)
 <use media/CAP.png>
-Package pdftex.def Info: media/CAP.png  used on input line 379.
+Package pdftex.def Info: media/CAP.png  used on input line 391.
 (pdftex.def)             Requested size: 226.4964pt x 217.42915pt.
-[10 <./media/jitter.jpg>]
-Underfull \hbox (badness 10000) in paragraph at lines 392--394
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[11 <./media/jitter.jpg>]
+Underfull \hbox (badness 10000) in paragraph at lines 404--406
 
  []
 
 
-Overfull \hbox (6.28722pt too wide) detected at line 407
-[][]
- []
-
-[11 <./media/CAP.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 412--414
-
- []
-
-
-Overfull \hbox (55.831pt too wide) detected at line 431
+Overfull \hbox (6.28722pt too wide) detected at line 419
 [][]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 445--446
+Underfull \hbox (badness 10000) in paragraph at lines 424--426
+
+ []
+
+[12 <./media/CAP.png>]
+Overfull \hbox (55.831pt too wide) detected at line 443
+[][]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 457--458
 []\OT1/cmr/m/n/10.95 Horizontal (\OT1/cmr/m/it/10.95 e.g Kafka par-ti-
  []
 
-[12] [13]
-Underfull \hbox (badness 1715) in paragraph at lines 529--530
+[13] [14]
+Underfull \hbox (badness 1715) in paragraph at lines 542--543
 []\OT1/cmr/m/n/10.95 MPI Ba-sics by Tom Nurkkalla. In-tro-duc-tion to dis-tribu
 ted com-put-ing with MPI.
  []
 
-[14]
-Underfull \hbox (badness 10000) in paragraph at lines 541--542
+
+Underfull \hbox (badness 10000) in paragraph at lines 554--555
 []\OT1/cmr/m/n/10.95 Batch vs Stream Pro-cess-ing: \OT1/cmr/m/it/10.95 A com-pr
 e-hen-sive com-par-i-son of paradigm\OT1/cmr/m/n/10.95 :
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 541--542
+Underfull \hbox (badness 10000) in paragraph at lines 554--555
 \OT1/cmr/m/it/10.95 https://umamahesh.net/batch-vs-stream-processing-a-comprehe
 nsive-comparison-of-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 543--544
+Underfull \hbox (badness 10000) in paragraph at lines 556--557
 []\OT1/cmr/m/n/10.95 Batch vs Stream Pro-cess-ing: \OT1/cmr/m/it/10.95 When to 
 Use Each and Why It Mat-ters\OT1/cmr/m/n/10.95 .
  []
@@ -663,16 +680,16 @@ LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `"SWE-4913 Research report".out' has not chan
 ged.
-(rerunfilecheck)             Checksum: E4620C9C89664FBF1370DF3D702694B9;6687.
+(rerunfilecheck)             Checksum: 777A8F2F3B9B94136A19FDEAABDA6781;6802.
  ) 
 Here is how much of TeX's memory you used:
- 12201 strings out of 467870
- 186217 string characters out of 5416903
- 1060610 words of memory out of 5000000
- 40851 multiletter control sequences out of 15000+600000
+ 12205 strings out of 467870
+ 186271 string characters out of 5416903
+ 1052610 words of memory out of 5000000
+ 40852 multiletter control sequences out of 15000+600000
  636181 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,765b,1291s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,79p,765b,1291s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\_edd.ie_\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\t
 crm1095.pk><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/
 amsfonts/cm/cmbx10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/t
@@ -688,9 +705,9 @@ lic/amsfonts/cm/cmr6.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts
 KTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/_edd.ie_/AppData/Local
 /Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/A
 ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on "SWE-4913 Research report.pdf" (15 pages, 345270 bytes).
+Output written on "SWE-4913 Research report.pdf" (15 pages, 346819 bytes).
 PDF statistics:
- 417 PDF objects out of 1000 (max. 8388607)
- 100 named destinations out of 1000 (max. 500000)
- 355 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 425 PDF objects out of 1000 (max. 8388607)
+ 103 named destinations out of 1000 (max. 500000)
+ 363 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -143,16 +143,6 @@
 	\subsection{Open Multi-Processing (OpenMP)}
 	An application programming interface (API) that supports multi-platform shared-memory multiprocessing programming in C, C++, and Fortran. 
 	It allows developers to write parallel code easily and efficiently by adding simple compiler directives to their existing code.
-	\\\\Utilizes the \textbf{Pragma} directive to allow the compiler to run the code sequentially if it doesn't support \textit{OpenMP}.
-	
-	\begin{lstlisting}
-		#pragma omp [construct] [clause]
-	\end{lstlisting}
-	
-	
-	\label{sec:background}
-	\subsection{Difference between MPI and OpenMP}
-	
 	\begin{table}[h]
 		\centering
 		\begin{tabular}{|p{0.45\textwidth}|p{0.45\textwidth}|}
@@ -166,6 +156,27 @@
 		\end{tabular}
 		\caption{Comparison between MPI and OpenMP}
 	\end{table} 
+	\\\\Utilizes the \textbf{Pragma} directive to allow the compiler to run the code sequentially if it doesn't support \textit{OpenMP}.
+	\begin{lstlisting}
+		#pragma omp [construct] [clause]
+	\end{lstlisting}
+
+	
+	\label{sec:background}
+	\subsection{Parallel algorithm design}
+	Methodology is based on the \textit{task/channel model}, it facilitates the development of efficient parallel programs running on distributed-memory computers.
+	
+	\subsubsection{Task/Channel Model}
+	Represents computations as a set of tasks that may interact with each other by sending messages through channels. Tasks can send local data values to other tasks via output ports and receive data from other tasks via input ports.
+	Receiving in the model is \textbf{synchronous} while sending is a \textbf{asynchronous} operation.\\
+	\\\textbf{Channel} - is a message queue that connects one task's output with another task's input port. Data values appear at the input port in the same order as which they were placed in the output port at the end of the channel.\\
+	\\Foster's design encourages development of scalable parallel algorithms by delaying machine-dependent considerations to the later steps.The design's fours steps involves:
+	\begin{itemize}
+		\item Partitioning.
+		\item Communication.
+		\item Agglomeration.
+		\item Mapping
+	\end{itemize}
 	
 	% --- Section 3: Networking Foundation ---
 	\newpage
@@ -351,6 +362,7 @@
 			Examples & 50 ms latency means it takes 50 ms for data to travel from source to destination & Jitter of 5 ms means latency varies by up to 5 ms over time \\
 			\hline
 		\end{tabular}
+		\caption{Comparison between Latency and Jitter}
 	\end{table}
 	
 	\begin{figure}[h!]
@@ -447,6 +459,7 @@
 			Fault tolerance & Checkpoints (\textit{e.g spark restart from checkpoints}) & Offsets \& replications (\textit{e.g Kafka resumes from last offset}). \\
 			\hline
 		\end{tabular}
+		\caption{Comparison between batch and stream processing}
 	\end{table}
 	
 	% --- Section 4: Kernel-level Optimization ---
