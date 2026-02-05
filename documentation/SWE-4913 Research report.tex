@@ -360,8 +360,94 @@
 		\label{fig:Internet speed test}
 	\end{figure}
 	
+	\label{sec:background}
+	\subsection{Data Processing Paradigm}
+	Data processing plays a role in how efficiently and effectively a system handles varying loads.\\
+	\\\textbf{CAP theorem:} distributed systems can guarantee at most two out of three properties [\textit{Eric Brewer, 2000}]
+	\begin{itemize}
+		\item \textbf{Consistency} -  every read receives the most recent read or an error. All clients sees the same data at same time no matter which node they connect to. For this to work data written to one node must be instantly forwarded \& replicated in all other nodes before a write is deemed successful.
+		\item \textbf{Availability} - every request by a non-failing node must result in a response, without a guarantee it has the most recent version of data.
+		\item \textbf{Partition tolerance} - system continues to operate despite an arbitrary number of messages being dropped/delayed by the network between nodes. In case of a \textit{network partition} failure it must be decided whether:
+		\begin{itemize}
+			\item Cancel the operation, decreasing availability but ensuring consistency.
+			\item Proceed with the operation, providing availability but risk inconsistency.
+		\end{itemize}
+	\end{itemize}	
+	\textbf{Network partition} - division of a computer network into relatively independent subnet either by design to optimize them separately or due to failure of network devices. Distributed software should be partition-tolerant that is even after a network is partitioned, it should still work.
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.5\linewidth, height=0.48\linewidth]{media/CAP.png}
+		\caption{CAP theory properties}
+		\label{fig:CAP theoty}
+	\end{figure}
 	
-
+	\subsubsection{Batch Processing}
+	Aggregation of data into discrete groups and processing them in a single scheduled operation, typically offline, triggered by time intervals (\textit{e.g. nightly jobs}) or data thresholds (\textit{e.g. 1GB patches}).\\
+	Ideal for:
+	\begin{itemize}
+		\item \textbf{Data warehousing} - central storage of data from multiple sources.
+		\item \textbf{Extract Transform Load (\textit{ETL})} - collection of data from a source reshaping/processing it and moving it to an output.
+		\item Large scale reporting
+	\end{itemize}
+	There are a variety of \textit{ETL} tools for batch processing: \textit{Apache airflow, Hadoop, AWS Data pipeline, Oracle data integration}.\\
+	\\Core steps:
+	\begin{itemize}
+		\item \textbf{Data collection:}\\Accumulation of data from sources into storage le \textit{S3, HDFS}.
+		\item \textbf{Processing:}\\Execute computation/transformation on an entire batch.
+		\item \textbf{Error handling:}\\Retries on batch failures, with \textit{idempotency} ensuring repeated runs don't duplicate outputs (\textit{use of unique-ids like snowflakes for batch identifiers})
+	\end{itemize}
+	
+	\begin{flushleft}	
+		\[
+		\begin{aligned}
+			\text{Throughput} &= \frac{\text{batch size}}{\text{processing time}} \\
+			\text{Latency} &= \text{Batch interval} + \text{processing time} \\
+			\text{Resource utilization} &= \text{Peak usage during processing (\textit{e.g. 80\% CPU for 30min}), idle otherwise.}
+		\end{aligned}
+		\]
+	\end{flushleft}
+	\textbf{Fault tolerance} - use replication \textit{e.g. 3X HDFS} and heartbeats for node liveness, failure trigger job restarts from checkpoints.
+	
+	\subsubsection{Stream Processing}
+	Handle and analyse data in real time or near real time as they arrive. Data streams are then processed as they arrive, involving a series of operations such as filtering, transforming and data aggregation. Allowing real-time implementations like; live analytics, triggering alerts, real-time dashboards.\\
+	\\Core steps:
+	\begin{itemize}
+		\item \textbf{Data ingestion:}\\
+		Consume events from sources like message queues using \textit{CDC} for database changes (\textit{e.g. Kafka topics})
+		\item \textbf{Processing:}\\
+		Apply transformations using frameworks (\textit{like Apache Flink or Kafka streams}).
+		\item \textbf{Output:}\\
+		Emit results to sinks (\textit{e.g. databases, caches}) in real-time.
+		\item \textbf{Error handling:}\\
+		Idempotency for safe retries (\textit{e.g. use unique\_ids}), rate limiting (\textit{e.g. token buckets}) to prevent overload and dead-letter queues for failed events.
+	\end{itemize}
+	\begin{flushleft}	
+		\[
+		\begin{aligned}
+			\text{Throughput} &= \text{N} + \text{node throughput} \\
+			\text{Latency} &= \text{ingress time} + \text{processing time}  + \text{egress time} \\
+			\text{Resource utilization} &= \text{For aggregation, window (\textit{e.g. 5min}) affects memory (\textit{1GB for 1M events/window})}
+		\end{aligned}
+		\]
+	\end{flushleft}
+	\begin{table}[h!]
+		\centering
+		\begin{tabular}{|l|p{6cm}|p{6cm}|}
+			\hline
+			\textbf{Aspect} & \textbf{Batch} & \textbf{Stream} \\
+			\hline
+			Latency & \textbf{High}, data is collected over a period \& processed in chunks at scheduled intervals. & \textbf{Low}, data is handled as it arrives. \\
+			\hline
+			Throughput & High for large batches (\textit{e.g 1TB/hr}) & High for continuous flow (\textit{e.g 1M events/sec}) \\
+			\hline
+			Resources & Peak during runs (\textit{e.g 80\% CPU for 1hr}). & Steady (\textit{e.g 50\% - 60\% CPU continuously}). \\
+			\hline
+			Scalability & Vertical (\textit{e.g larger machines}) or horizontal (\textit{e.g spark clusters}) & Horizontal (\textit{e.g Kafka partitions/brokers}) \\
+			\hline
+			Fault tolerance & Checkpoints (\textit{e.g spark restart from checkpoints}) & Offsets \& replications (\textit{e.g Kafka resumes from last offset}). \\
+			\hline
+		\end{tabular}
+	\end{table}
 	
 	% --- Section 4: Kernel-level Optimization ---
 	\section{Kernel-level Optimization}
