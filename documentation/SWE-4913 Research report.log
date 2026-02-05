@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  5 FEB 2026 13:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  5 FEB 2026 13:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -683,10 +683,10 @@ ged.
 (rerunfilecheck)             Checksum: 777A8F2F3B9B94136A19FDEAABDA6781;6802.
  ) 
 Here is how much of TeX's memory you used:
- 12205 strings out of 467870
- 186271 string characters out of 5416903
+ 12207 strings out of 467870
+ 186774 string characters out of 5416903
  1052610 words of memory out of 5000000
- 40852 multiletter control sequences out of 15000+600000
+ 40853 multiletter control sequences out of 15000+600000
  636181 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,11n,79p,765b,1291s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -705,9 +705,9 @@ lic/amsfonts/cm/cmr6.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts
 KTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/_edd.ie_/AppData/Local
 /Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/A
 ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on "SWE-4913 Research report.pdf" (15 pages, 346819 bytes).
+Output written on "SWE-4913 Research report.pdf" (15 pages, 347838 bytes).
 PDF statistics:
- 425 PDF objects out of 1000 (max. 8388607)
- 103 named destinations out of 1000 (max. 500000)
+ 426 PDF objects out of 1000 (max. 8388607)
+ 104 named destinations out of 1000 (max. 500000)
  363 words of extra memory for PDF output out of 10000 (max. 10000000)
 
