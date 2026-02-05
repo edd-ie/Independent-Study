@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  1 FEB 2026 21:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  4 FEB 2026 23:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -390,33 +390,27 @@ LaTeX Warning: Label `sec:background' multiply defined.
 
 LaTeX Warning: Label `sec:background' multiply defined.
 
-
-LaTeX Warning: Label `sec:background' multiply defined.
-
-
-LaTeX Warning: Label `sec:background' multiply defined.
-
 )
 \openout1 = `"SWE-4913 Research report.aux"'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 35.
-LaTeX Font Info:    ... okay on input line 35.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -479,7 +473,7 @@ s.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
 \c@lstlisting=\count325
-Package hyperref Info: Link coloring OFF on input line 35.
+Package hyperref Info: Link coloring OFF on input line 36.
  (SWE-4913 Research report.out) (SWE-4913 Research report.out)
 \@outlinefile=\write3
 \openout3 = `"SWE-4913 Research report.out"'.
@@ -492,77 +486,135 @@ Package hyperref Info: Link coloring OFF on input line 35.
 \openout4 = `"SWE-4913 Research report.toc"'.
 
  [2]
-Underfull \hbox (badness 10000) in paragraph at lines 50--53
+Underfull \hbox (badness 10000) in paragraph at lines 51--54
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 69--71
+Underfull \hbox (badness 10000) in paragraph at lines 70--72
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 77--83
+Underfull \hbox (badness 10000) in paragraph at lines 74--77
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 89--93
+Overfull \hbox (1.78828pt too wide) in paragraph at lines 74--77
+\OT1/cmr/bx/n/10.95 Solution \OT1/cmr/m/n/10.95 - MPI pro-vides a stan-dard API
+ pro-vided an MPI is in-stalled (Open-MPI, MPICH) 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--94
 
  []
 
 [3] [4]
-Underfull \hbox (badness 10000) in paragraph at lines 142--145
+Underfull \hbox (badness 10000) in paragraph at lines 144--147
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 159--159
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
 []\OT1/cmr/m/n/10.95 Supports par-al-lel com-pu-ta-tion for
  []
 
 
-Underfull \hbox (badness 2547) in paragraph at lines 159--159
+Underfull \hbox (badness 2547) in paragraph at lines 161--161
 \OT1/cmr/m/n/10.95 distributed-memory and shared-memory
  []
 
-[5]
-Underfull \hbox (badness 10000) in paragraph at lines 215--218
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[5] [6]
+Underfull \hbox (badness 10000) in paragraph at lines 227--232
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 221--229
+Underfull \hbox (badness 10000) in paragraph at lines 236--238
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 221--229
-
- []
-
-[6]
-Underfull \hbox (badness 10000) in paragraph at lines 238--246
+Underfull \hbox (badness 10000) in paragraph at lines 250--261
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 238--246
+Underfull \hbox (badness 10000) in paragraph at lines 250--261
+
+ []
+
+[7]
+Underfull \hbox (badness 10000) in paragraph at lines 264--272
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 238--246
+Underfull \hbox (badness 10000) in paragraph at lines 264--272
 
  []
 
-[7] [8]
-Underfull \hbox (badness 1715) in paragraph at lines 331--332
+
+Underfull \hbox (badness 10000) in paragraph at lines 274--281
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 274--281
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 274--281
+
+ []
+
+[8]
+Underfull \hbox (badness 1383) in paragraph at lines 349--350
+[]\OT1/cmr/m/n/10.95 Dynamic and can fluc-tu-ate over
+ []
+
+[9]
+<media/jitter.jpg, id=283, 895.84688pt x 278.54062pt>
+File: media/jitter.jpg Graphic file (type jpg)
+<use media/jitter.jpg>
+Package pdftex.def Info: media/jitter.jpg  used on input line 358.
+(pdftex.def)             Requested size: 362.37569pt x 112.66808pt.
+ [10 <./media/jitter.jpg>] [11]
+Underfull \hbox (badness 1715) in paragraph at lines 443--444
 []\OT1/cmr/m/n/10.95 MPI Ba-sics by Tom Nurkkalla. In-tro-duc-tion to dis-tribu
 ted com-put-ing with MPI.
  []
 
-[9] [10] (SWE-4913 Research report.aux)
+
+Underfull \hbox (badness 10000) in paragraph at lines 455--456
+[]\OT1/cmr/m/n/10.95 Batch vs Stream Pro-cess-ing: \OT1/cmr/m/it/10.95 A com-pr
+e-hen-sive com-par-i-son of paradigm\OT1/cmr/m/n/10.95 :
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 455--456
+\OT1/cmr/m/it/10.95 https://umamahesh.net/batch-vs-stream-processing-a-comprehe
+nsive-comparison-of-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 457--458
+[]\OT1/cmr/m/n/10.95 Batch vs Stream Pro-cess-ing: \OT1/cmr/m/it/10.95 When to 
+Use Each and Why It Mat-ters\OT1/cmr/m/n/10.95 .
+ []
+
+[12] (SWE-4913 Research report.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-29>
@@ -573,16 +625,16 @@ LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `"SWE-4913 Research report".out' has not chan
 ged.
-(rerunfilecheck)             Checksum: 03C1BDCBE2DECE9467E35AAB61212CF2;5855.
+(rerunfilecheck)             Checksum: 7799789E455E14BD282363438642778D;6196.
  ) 
 Here is how much of TeX's memory you used:
- 12135 strings out of 467870
- 184587 string characters out of 5416903
- 992621 words of memory out of 5000000
- 40805 multiletter control sequences out of 15000+600000
+ 12179 strings out of 467870
+ 185885 string characters out of 5416903
+ 1060610 words of memory out of 5000000
+ 40838 multiletter control sequences out of 15000+600000
  635480 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,765b,2093s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,765b,1291s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\_edd.ie_\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\t
 crm1095.pk><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/
 amsfonts/cm/cmbx10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/t
@@ -594,11 +646,13 @@ rs/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.
 pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfont
 s/cm/cmr17.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/pub
 lic/amsfonts/cm/cmr6.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on "SWE-4913 Research report.pdf" (10 pages, 223176 bytes).
+/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/_edd.ie_/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/A
+ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on "SWE-4913 Research report.pdf" (12 pages, 308591 bytes).
 PDF statistics:
- 341 PDF objects out of 1000 (max. 8388607)
- 82 named destinations out of 1000 (max. 500000)
- 297 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 384 PDF objects out of 1000 (max. 8388607)
+ 93 named destinations out of 1000 (max. 500000)
+ 326 words of extra memory for PDF output out of 10000 (max. 10000000)
 

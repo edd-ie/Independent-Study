@@ -6,32 +6,35 @@
 \contentsline {subsection}{\numberline {2.2}Open Multi-Processing (OpenMP)}{5}{subsection.2.2}%
 \contentsline {subsection}{\numberline {2.3}Difference between MPI and OpenMP}{5}{subsection.2.3}%
 \contentsline {section}{\numberline {3}Networking Foundation}{6}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Resumable/Partial downloads}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.1}Resumable / Partial Downloads}{6}{subsection.3.1}%
 \contentsline {subsubsection}{\numberline {3.1.1}Range}{6}{subsubsection.3.1.1}%
-\contentsline {subsubsection}{\numberline {3.1.2}Accept-Range}{6}{subsubsection.3.1.2}%
-\contentsline {subsubsection}{\numberline {3.1.3}Content-Range}{6}{subsubsection.3.1.3}%
-\contentsline {subsubsection}{\numberline {3.1.4}If-range}{6}{subsubsection.3.1.4}%
-\contentsline {subsection}{\numberline {3.2}Resumable/Multipart Uploads}{6}{subsection.3.2}%
-\contentsline {subsubsection}{\numberline {3.2.1}Stages}{7}{subsubsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.2}Advantages}{7}{subsubsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {3.2.3}Best practises}{7}{subsubsection.3.2.3}%
-\contentsline {subsubsection}{\numberline {3.2.4}Standard protocols}{7}{subsubsection.3.2.4}%
-\contentsline {section}{\numberline {4}Kernel-level Optimization}{8}{section.4}%
-\contentsline {subsection}{\numberline {4.1}IO uring}{8}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Kernel TLS (KTLS)}{8}{subsection.4.2}%
-\contentsline {section}{\numberline {5}Synthesis \& Benchmarking}{8}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Broadcaster}{8}{subsection.5.1}%
-\contentsline {section}{\numberline {6}Experimental Methodology}{8}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Hardware Setup}{8}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Software Environment}{8}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Software Environment}{8}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Benchmark Design}{9}{subsection.6.4}%
-\contentsline {section}{\numberline {7}Optimization Strategies}{9}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Non-Blocking Communication}{9}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Remote Memory Access (RMA)}{9}{subsection.7.2}%
-\contentsline {subsection}{\numberline {7.3}MCA Parameter Tuning}{9}{subsection.7.3}%
-\contentsline {section}{\numberline {8}Results and Analysis}{9}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Bandwidth Analysis}{9}{subsection.8.1}%
-\contentsline {subsection}{\numberline {8.2}Mathematical Performance Model}{9}{subsection.8.2}%
-\contentsline {subsection}{\numberline {8.3}Comparison of Protocols}{9}{subsection.8.3}%
-\contentsline {section}{\numberline {9}Conclusion}{9}{section.9}%
+\contentsline {subsubsection}{\numberline {3.1.2}Accept-Range}{7}{subsubsection.3.1.2}%
+\contentsline {subsubsection}{\numberline {3.1.3}Content-Range}{7}{subsubsection.3.1.3}%
+\contentsline {subsubsection}{\numberline {3.1.4}If-Range}{7}{subsubsection.3.1.4}%
+\contentsline {subsection}{\numberline {3.2}Resumable / Multipart Uploads}{7}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Stages}{8}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Advantages}{8}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Best Practices}{8}{subsubsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.4}Standard Protocols}{8}{subsubsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.3}Latency}{9}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Calculations}{9}{subsubsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.4}Jitter}{9}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Kernel-level Optimization}{10}{section.4}%
+\contentsline {subsection}{\numberline {4.1}IO uring}{10}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Kernel TLS (KTLS)}{10}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Synthesis \& Benchmarking}{10}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Broadcaster}{10}{subsection.5.1}%
+\contentsline {section}{\numberline {6}Experimental Methodology}{10}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Hardware Setup}{10}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Software Environment}{10}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Software Environment}{11}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Benchmark Design}{11}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Optimization Strategies}{11}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Non-Blocking Communication}{11}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Remote Memory Access (RMA)}{11}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}MCA Parameter Tuning}{12}{subsection.7.3}%
+\contentsline {section}{\numberline {8}Results and Analysis}{12}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Bandwidth Analysis}{12}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Mathematical Performance Model}{12}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Comparison of Protocols}{12}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Conclusion}{12}{section.9}%
