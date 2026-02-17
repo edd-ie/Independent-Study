@@ -1,18 +1,19 @@
 # ------------------------------------------------------------
 # Project configuration
 # ------------------------------------------------------------
-TARGET	  := main
-SRC_DIRS    := . Comm
+TARGET      := main
+SRC_DIRS 	:= . IOuring mpi openmp util
 BUILD_DIR   := build
 DEBUG_DIR   := $(BUILD_DIR)/debug
 RELEASE_DIR := $(BUILD_DIR)/release
 
 # ------------------------------------------------------------
-# Tools
+# Tools & Libraries
 # ------------------------------------------------------------
 CXX      := mpicxx
 FORMAT   := clang-format
-FORMAT_FLAGS := -i
+# Add -luring if you are using io_uring specifically
+LIBS     := -luring 
 
 # ------------------------------------------------------------
 # Colors
@@ -20,6 +21,7 @@ FORMAT_FLAGS := -i
 GREEN  := \033[1;32m
 BLUE   := \033[1;34m
 YELLOW := \033[1;33m
+RED    := \033[1;31m
 RESET  := \033[0m
 
 # ------------------------------------------------------------
@@ -27,41 +29,41 @@ RESET  := \033[0m
 # ------------------------------------------------------------
 MODE ?= release
 
+# Base flags for all modes
+COMMON_FLAGS := -std=c++23 -I. -Wall -Wextra -Wpedantic
+
 ifeq ($(MODE),debug)
     OUT_DIR   := $(DEBUG_DIR)
-    CXXFLAGS  := -std=c++23 -I. -O0 -g -Wall -Wextra -Wpedantic
+    CXXFLAGS  := $(COMMON_FLAGS) -O0 -g -DDEBUG
+    LDFLAGS   := 
     BUILD_MSG := "Building in DEBUG mode"
 else
     OUT_DIR   := $(RELEASE_DIR)
-    CXXFLAGS  := -std=c++23 -I. -O3 -march=native
+    CXXFLAGS  := $(COMMON_FLAGS) -fopenmp -O3 -march=native
+    LDFLAGS   := -fopenmp
     BUILD_MSG := "Building in RELEASE mode"
 endif
 
 # ------------------------------------------------------------
 # Source discovery
 # ------------------------------------------------------------
-SRCS := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.cpp))
-OBJS := $(patsubst %.cpp,$(OUT_DIR)/%.o,$(SRCS))
+SRCS := $(shell find $(SRC_DIRS) -maxdepth 1 -name "*.cpp" 2>/dev/null)
+OBJS := $(SRCS:%.cpp=$(OUT_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 # ------------------------------------------------------------ 
-# Default rule 
+# Primary Rules
 # ------------------------------------------------------------ 
-all: msg $(OUT_DIR)/$(TARGET) 
+all: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(GREEN)Build Complete: $(OUT_DIR)/$(TARGET)$(RESET)"
 
-msg: 
-	@echo -e "$(BLUE)$(BUILD_MSG)$(RESET)"
-
-# ------------------------------------------------------------
-# Link
-# ------------------------------------------------------------
+# High-level build message - only shows if something actually needs to be built
 $(OUT_DIR)/$(TARGET): $(OBJS)
+	@echo -e "$(BLUE)$(BUILD_MSG)$(RESET)"
 	@echo -e "$(GREEN)[Link]$(RESET) $@"
-	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@
+	@$(CXX) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
-# ------------------------------------------------------------
 # Compile with automatic dependency generation
-# ------------------------------------------------------------
 $(OUT_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo -e "$(YELLOW)[Compile]$(RESET) $<"
@@ -70,32 +72,33 @@ $(OUT_DIR)/%.o: %.cpp
 -include $(DEPS)
 
 # ------------------------------------------------------------
-# Format target (clang-format)
+# Utility Targets
 # ------------------------------------------------------------
+
+# Format all source and header files
 format:
 	@echo -e "$(GREEN)[Format]$(RESET) Applying clang-format"
-	@$(FORMAT) $(FORMAT_FLAGS) $(SRCS) $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.hpp))
+	@find $(SRC_DIRS) -name "*.cpp" -o -name "*.hpp" | xargs $(FORMAT) -i
 
-# ------------------------------------------------------------
-# Test target (runs MPI program)
-# ------------------------------------------------------------
+# Run MPI test
 n ?= 4
-
 test: $(OUT_DIR)/$(TARGET)
-	@echo -e "$(GREEN)[Test]$(RESET) mpirun -np $(n) ./$(OUT_DIR)/$(TARGET)"
+	@echo -e "$(GREEN)[Test]$(RESET) Running with $(n) processes..."
 	@mpirun -np $(n) ./$(OUT_DIR)/$(TARGET)
 
-run:
-	$(OUT_DIR)/$(TARGET)
-	@mpirun -np $(n) ./$(OUT_DIR)/$(TARGET)
+# Specialized test for your readv/cat logic
+readv: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(GREEN)[Standard Run]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) ./resource/test_input.txt
+	@echo -e "\n$(GREEN)[Quiet Run (Raw I/O)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) -q ./resource/test_input.txt
 
-# ------------------------------------------------------------
-# Clean
-# ------------------------------------------------------------
+# Check for memory leaks (Crucial for your malloc/posix_memalign logic!)
+memcheck: $(OUT_DIR)/$(TARGET)
+	@valgrind --leak-check=full --show-leak-kinds=all -s ./$(OUT_DIR)/$(TARGET) ./resource/test_input.txt
+
 clean:
-	@echo -e "$(YELLOW)[Clean]$(RESET)"
+	@echo -e "$(RED)[Clean]$(RESET) Removing $(BUILD_DIR)"
 	@rm -rf $(BUILD_DIR)
 
-
-
-.PHONY: all clean msg format test
+.PHONY: all clean format test readv memcheck
