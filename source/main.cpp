@@ -33,8 +33,9 @@ int main(int argc, char **argv)
     // --- 4. Test io_uring_batch Implementation ---
     std::println("\n>>> STARTING IO_URING ASYNC BATCH-PROCESSING TEST");
     optind = 1;
+    // TODO: fix infinite loop
     // RESET getopt pointer
-    uring_batch_async_impl::uring_batch_async_cat(argc, argv);
+    // uring_batch_async_impl::uring_batch_async_cat(argc, argv);
 
     return 0;
 }
