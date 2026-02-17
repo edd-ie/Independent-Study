@@ -11,6 +11,7 @@
 \usepackage{cite}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{graphicx}
 
 
 % --- Code Style Settings ---
@@ -71,15 +72,15 @@
 	
 	\begin{itemize} 
 		\item \textbf{Portability:}
-		\\Each vendor had propriety library for message passing thus requiring rewrites for different use cases.
-		\\\textbf{Solution} - \textit{MPI} provides a standard API provided an MPI is installed (OpenMPI, MPICH)
+		\\Each vendor had propriety library for message passing thus requiring rewrites for different use cases.\\
+		\\\textbf{Solution} - MPI provides a standard API provided an MPI is installed (OpenMPI, MPICH)
 		
 		\item \textbf{Memory wall (\textit{Distributed Memory Management}):}
-		\\Most large scale computers are distributed memory systems. Moving data between isolated memory manually is complex and error-prone.
-		\\\textbf{Solution} - \textit{MPI} treats communication as explicit messages. \textit{MPI} uses objects called \textit{communicators} 
+		\\Most large scale computers are distributed memory systems. Moving data between isolated memory manually is complex and error-prone.\\
+		\\\textbf{Solution} - MPI treats communication as explicit messages. MPI uses objects called \textit{communicators} 
 		and \textit{groups} to define which collection of processes may 
-		communicate with each other. 
-		\\\\Provides functions that handle networking, buffering and memory copying.
+		communicate with each other.\\
+		Provides functions that handle networking, buffering and memory copying.
 		\begin{itemize}
 			\item\textbf{Sender}: A process calls \textit{MPI\_Send()} (or a variant) to transmit a message.
 			\item\textbf{Receiver}: A process calls \textit{MPI\_Recv()} to accept the message.
@@ -89,7 +90,7 @@
 		\item \textbf{Complexity of collective operations:}
 		\\ Parallel algorithms often send pieces of data or collects results from multiple end points. 
 		\\Writing \textit{one-to-many} or \textit{many-to-one} patterns is tedious and usually inefficient.
-		\\\\\textbf{Solution} - \textit{MPI} provides collective communication through built in functions.
+		\\\\\textbf{Solution} - MPI provides collective communication through built in functions.
 		\begin{itemize}
 			\item \textbf{Broadcaster} - sends data from one process to all.
 			\item \textbf{Scatter/Gather} - Splitting a large vector into chunks for different processes or reassembling them.
@@ -103,109 +104,363 @@
 	\end{itemize}
 	
 	\subsubsection{The OpenMPI Architecture}
-	Briefly explain the Modular Component Architecture (MCA) and the Point-to-Point Management Layer (PML).
-	\subsubsection{Interconnect Technologies}
-	Technical specifications of the hardware used (e.g., InfiniBand EDR, 100GbE, RoCE).
+	OpenMPI is base on the Modular Component Architecture is a system that breaks down a software into independent, interchangeable modules, each encapsulating specific functionality. It is a series of projects, frameworks, components, and modules that are assembled at run-time to create an \textit{MPI} implementation.
+	\\Each framework typically has one or more components that are used at run-time. \textbf{Point-to-point Management} Layer sits between the \textit{MPI} API and the lower-level network transport layers. It manages message matching, ordering, and delivery guarantees required by the MPI standard. It decides how and through which transport a message will be sent. The \textbf{ucx} \textit{pml} sends messages across \textbf{InfiniBand-based networks}. 
+	\\The \textbf{btl} framework is used by the MPI layer to send bytes across different types underlying networks. The \textbf{tcp} \textit{btl}, for example, sends messages across TCP-based networks
+	
 	\subsubsection{Communication Protocols}
-	Distinguish between the Eager and Rendezvous protocols and their impact on throughput.
+	MPI provides three different communication methods that MPI processes can use to communicate with each other.
+	
+	\begin{itemize}
+		\item \textbf{Point-to-Point Communication} - the most used communication method. It involves the transfer of a message from one process to a particular process in the same communicator. MPI provides blocking (\textit{synchronous}) and non-blocking (\textit{asynchronous}) point-to-point communication. 
+		\\For the \textit{blocking} communication, an MPI process \textit{sends a message to another MPI process and waits until the receiving process completely and correctly receives the message} before it continues its work. 
+		\\On the other hand, a sending process using \textit{non-blocking} communication \textit{sends a message to another MPI process and continues its work without waiting} to ensure that the message has been correctly received by the receiving process.
+		
+		\item \textbf{Collective Communication} - a process broadcasts a message is to all processes in the same communicator including itself.
+		
+		\item \textbf{One-sided communication} - a process can directly access the memory space of another process without involving it.
+	\end{itemize}
+	
+	\newpage
+	\begin{lstlisting}
+		/* Standard send in MPI. Behind the scenes, it will issue a buffered send MPI_Bsend or a synchronous send MPI_Ssend, based on whether the buffer attached contains enough free space for the message. */
+		int MPI_Send(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+		/* Asynchronous blocking send ('B' == buffered); it will block until a copy of the buffer passed is made. MPI will send the buffer copied at a later point */ 
+		int MPI_Bsend(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+		/* Synchronous blocking send; it will block until the recipient has received the message. Ensure the buffer and be used safely once MPI_Ssend return */
+		int MPI_Ssend(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+		/* Standard blocking send ('R' == ready); it will block until the recipient has received the message. Requires the recipient to have issued the corresponding receive routine (MPI_Recv or MPI_Irecv) before MPI_Rsend is invoked. */
+		int MPI_Rsend(const void* buffer, int count, MPI_Datatype datatype, int recipient, int tag, MPI_Comm communicator);
+		
+	\end{lstlisting}
+	
+	
 	
 	\label{sec:background}
 	\subsection{Open Multi-Processing (OpenMP)}
 	An application programming interface (API) that supports multi-platform shared-memory multiprocessing programming in C, C++, and Fortran. 
 	It allows developers to write parallel code easily and efficiently by adding simple compiler directives to their existing code.
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|p{0.45\textwidth}|p{0.45\textwidth}|}
+			\hline
+			\textbf{MPI} & \textbf{OpenMP} \\ \hline
+			Supports parallel computation for distributed-memory and shared-memory systems. & Supports parallel computation for shared-memory systems only. \\ \hline
+			A process-based parallelism. & A thread-based parallelism. \\ \hline
+			Each process has its own memory space and executes independently from the other processes. & Threads share the same resources and access shared memory. \\ \hline
+			Processes exchange data by passing messages to each other. & There is no notion of message-passing. Threads access shared memory. \\ \hline
+			Process creation overhead occurs one time. & It depends on the implementation. More overhead can occur when creating threads to join a task. \\ \hline
+		\end{tabular}
+		\caption{Comparison between MPI and OpenMP}
+	\end{table} 
 	\\\\Utilizes the \textbf{Pragma} directive to allow the compiler to run the code sequentially if it doesn't support \textit{OpenMP}.
-	
 	\begin{lstlisting}
 		#pragma omp [construct] [clause]
 	\end{lstlisting}
+
 	
+	\label{sec:background}
+	\subsection{Parallel algorithm design}
+	Methodology is based on the \textit{task/channel model}, it facilitates the development of efficient parallel programs running on distributed-memory computers.
 	
+	\subsubsection{Task/Channel Model}
+	Represents computations as a set of tasks that may interact with each other by sending messages through channels. Tasks can send local data values to other tasks via output ports and receive data from other tasks via input ports.
+	Receiving in the model is \textbf{synchronous} while sending is a \textbf{asynchronous} operation.\\
+	\\\textbf{Channel} - is a message queue that connects one task's output with another task's input port. Data values appear at the input port in the same order as which they were placed in the output port at the end of the channel.\\
+	\\Foster's design encourages development of scalable parallel algorithms by delaying machine-dependent considerations to the later steps.The design's fours steps involves:
+	\begin{itemize}
+		\item Partitioning.
+		\item Communication.
+		\item Agglomeration.
+		\item Mapping
+	\end{itemize}
 	
 	% --- Section 3: Networking Foundation ---
+	\newpage
 	\section{Networking Foundation}
 	\label{sec:background}
-	\subsection{Resumable/Partial downloads}
-	To support \textbf{Partial / Resumable downloads} they need to be supported by the server(sender).
+	\subsection{Resumable / Partial Downloads}
 	
-	\subsubsection{Accept-Range}
-	Indicates if a server accepts range requests
-	\begin{lstlisting}
-		Accept-Range: none
-		Accept-Range: <unit> // e.g. bytes
-	\end{lstlisting}
-	
+	Partial or resumable downloads allow a client to retrieve only specific portions of a resource rather than downloading the entire file from the beginning. This is essential for large media files, software packages, and any scenario where network interruptions are common.  
+	To support partial downloads, the \textbf{server (sender)} must explicitly implement HTTP range semantics and advertise that it can return byte ranges on demand.
 	
 	\subsubsection{Range}
-	Indicates what part of a resource that the server should return
-	\\Status code:
+	
+	The \texttt{Range} header specifies which segment(s) of a resource the client wants to retrieve.  
+	It enables efficient skipping, seeking, and resuming of downloads without re-fetching previously received data.
+	
+	\textbf{Relevant status codes:}
 	\begin{itemize}
-		\item \textbf{206} : \textit{Partial content}, server can send the request.
-		\item \textbf{416} : \textit{Range not satisfiable}, ranges are invalid.
-		\item \textbf{200} : Server doesn't support range request or request ignored
+		\item \textbf{206 Partial Content} — The server supports range requests and is returning the requested segment(s).
+		\item \textbf{416 Range Not Satisfiable} — The requested range is invalid (e.g., out of bounds).
+		\item \textbf{200 OK} — The server does not support range requests or has chosen to ignore the header.
 	\end{itemize}
-	The header requests one or more subranges of selected data, \textit{similar to skips in audio or video}.
+	The header can request one or multiple subranges, similar to how media players jump to different timestamps in audio or video streams.
+	
 	\begin{lstlisting}
 		Range: <unit>=<start-end>
-		Range: <unit>=<n->		// start from chunk n till the end
-		Range: <unit>=<-n>		// select the last n chunks	
-		Range: <unit>=<start-end>, <start-end>, <start-end>  // select multiple chunks from different position
-		Range: <unit>=<start-end>, <-end>
+		Range: <unit>=<n->        // from byte n to the end
+		Range: <unit>=<-n>        // last n bytes of the file
+		Range: <unit>=<s-e>, <s-e>, <s-e>   // multiple non-contiguous ranges
+		Range: <unit>=<s-e>, <-e>           // mixed range types
 	\end{lstlisting}
+	Servers may return ranges in sequential order even if the client requested them out of order, ensuring efficient streaming without buffering the entire response.
+	
+	\subsubsection{Accept-Range}
+	The \texttt{Accept-Ranges} header indicates whether the server supports range requests and which unit it accepts (typically bytes).
+	
+	\begin{lstlisting}
+		Accept-Ranges: none
+		Accept-Ranges: bytes
+	\end{lstlisting}
+	If the server returns \texttt{none}, clients should fall back to full downloads.
 	
 	\subsubsection{Content-Range}
-	Indicates where the content of a response belongs in relation to a complete resource
+	The \texttt{Content-Range} header describes where the returned segment fits within the full resource.  
+	It is included in responses with status \textbf{206}.
+	
 	\begin{lstlisting}
-		Content-Range: <unit> <range>/<size>  // status : 206
-		Content-Range: <unit> <range>\*	 // Length unknown
-		Content-Range: <unit> *\<size>	// 416 : not in range
+		Content-Range: <unit> <range>/<size>   // e.g. bytes 0-499/2000
+		Content-Range: <unit> <range>/*        // size unknown
+		Content-Range: <unit> */<size>         // 416: invalid range
 	\end{lstlisting}
-	Server service requests in order but may reorder ranges in sequential order in order to not buffer an entire response on disk
-	
-	\subsubsection{If-range}
-	Makes range requests conditional, \textbf{206}=\textit{fulfilled} and \textbf{200}=\textit{ignored}.
-	\\Header can use either \textit{last-modified} or \textit{Etag} but not both. It can be used to check for change since last download.
-	
-	
-	\label{sec:background}
-	\subsection{Resumable/Multipart Uploads}
-	The process involve breaking a large file into smaller chunks and sending the individually.
-	\\\\\textbf{Resumability} is achieved by tracking which chunk have been successfully acknowledged by the server.
-	\\If a receiver fails, sender only sends the missing chunks instead of the entire file
-	
-	\label{sec:background}
-	\subsubsection{Stages}
-	\textbf{Initiation:}
-	\\Sender sends a post request to the receiver(s) to start an upload.
-	\\Receiver returns a unique \textit{upload-id} and prepares storage for incoming parts
-	\\\\\textbf{Part upload:}
-	\\File is sliced into chunks each uploaded with a \textit{part-number, upload-id}
-	\\\\\textbf{Finalization:}
-	\\Once all parts are uploaded, sender sends a completion request listing all \textit{Etags}.
-	\\Receiver stitches all pieces together and send a confirmation.
-	
-	\label{sec:background}
-	\subsubsection{Advantages}
-	\textbf{Parallel streams} - sender open 4-8 concurrent http connections to upload different parts fully utilizing available bandwidth.
-	\\\textbf{Memory efficiency} - remove need of loading large amount of data in ram, sliced small chunks keeps memory footprint low.
-	\\\textbf{Error isolation} - failure doesn't affect the whole upload process just the slice.
-	
-	\label{sec:background}
-	\subsubsection{Best practises}
-	\textbf{Exponential backoff:}
-	\\If a part fails, don't retry immediately have increasing wait times before next trial (\textit{1s - 2s - 3s}) as a form of network congestion control.
-	\\\\\textbf{MD5 validation:}
-	\\Always send a MD5 header with each part, it lets the receiver verify the integrity before acknowledging.
-	\\\\\textbf{Cleanup process:}
-	\\Add lifecycle rules to deal with unfinished uploads(e.g. delete) after a specified time period.
-	\\\\\textbf{Dynamic chunking:}
-	\\Adjust chunk size based on network speed; \textit{5MB(mobile), 25MB(Fibre)}.
-	
-	\label{sec:background}
-	\subsubsection{Standard protocols}
+	This header allows clients to:
 	\begin{itemize}
-		\item AWS S3 Multipart.
-		\item tus.io
-	\end{itemize} 
+		\item reconstruct the full file from multiple partial responses,
+		\item verify progress,
+		\item detect mismatches or corruption.
+	\end{itemize}
+	
+	\subsubsection{If-Range}
+	The \texttt{If-Range} header makes a range request conditional.  
+	If the resource has not changed since the client last downloaded it, the server returns \textbf{206}.  
+	If it has changed, the server returns \textbf{200} with the full resource, ensuring the client does not stitch incompatible segments together.
+	\\\\
+	The header may use either:
+	\begin{itemize}
+		\item \textbf{Last-Modified} timestamp, or
+		\item \textbf{ETag} value
+	\end{itemize}
+	but not both simultaneously.\\\\
+	This mechanism is crucial for safe resumable downloads, especially when files may be updated on the server.
+	
+	
+	
+	\label{sec:background}
+	\subsection{Resumable / Multipart Uploads}
+	Resumable or multipart uploads are designed to reliably transfer large files over unstable or bandwidth‑limited networks. Instead of sending the entire file in a single request, the file is divided into smaller, manageable chunks that are uploaded independently. This approach improves reliability, reduces memory usage, and allows uploads to continue even after interruptions.
+	\\
+	\textbf{Resumability} is achieved by tracking which chunks have been successfully acknowledged by the receiver.  
+	If a failure occurs—whether due to network instability, client crash, or server timeout—the sender retransmits only the missing chunks rather than restarting the entire upload.
+	
+	\subsubsection{Stages}
+	
+	\textbf{Initiation}  
+	The sender begins by issuing a POST request to the receiver to start an upload session.  
+	The receiver responds with a unique \textit{upload-id} and allocates temporary storage for incoming parts. This identifier is used to associate all subsequent chunk uploads with the same file.
+	\\\\
+	\textbf{Part Upload}  
+	The file is sliced into fixed‑size or dynamically sized chunks. Each chunk is uploaded independently along with its \textit{part-number} and the \textit{upload-id}.  
+	Because each part is isolated, uploads can be parallelized and retried individually.
+	\\\\
+	\textbf{Finalization}  
+	Once all parts have been successfully uploaded, the sender issues a completion request containing the list of all \textit{Etags} (hashes or identifiers returned by the receiver for each part).  
+	The receiver verifies the list, stitches the chunks together in the correct order, performs integrity checks, and returns a final confirmation.
+	
+	\subsubsection{Advantages}
+	
+	\textbf{Parallel Streams:}\\ 
+	The sender can open multiple concurrent HTTP connections (typically 4–8) to upload different chunks simultaneously. This maximizes throughput and better utilizes available bandwidth.\\
+	\\
+	\textbf{Memory Efficiency:}\\  
+	Only small slices of the file need to be loaded into memory at any given time. This avoids the overhead of buffering large files and keeps RAM usage predictable and low.\\
+	\\
+	\textbf{Error Isolation:} \\
+	Failures affect only the chunk being uploaded. Instead of restarting the entire transfer, the sender retries only the failed part, significantly reducing wasted time and bandwidth.
+	
+	\subsubsection{Best Practices}
+	\textbf{Exponential Backoff} - When a chunk upload fails, the sender should not retry immediately. Instead, it waits progressively longer intervals (e.g., 1s → 2s → 4s) before retrying.This prevents unnecessary congestion and aligns with common network‑friendly retry strategies.\\	
+	\\
+	\textbf{MD5 Validation} - Each part should include an MD5 checksum header. The receiver validates the checksum before acknowledging the upload, ensuring data integrity and preventing corrupted chunks from being accepted.\\
+	\\
+	\textbf{Cleanup Process} - Unfinished or abandoned uploads can accumulate over time. Lifecycle rules should be configured to automatically delete incomplete uploads after a defined retention period.\\
+	\\
+	\textbf{Dynamic Chunking} - Chunk size can be adapted based on network conditions, example:  
+	\begin{itemize}
+		\item \textit{5 MB} chunks for mobile or unstable networks  
+		\item \textit{25 MB} chunks for high‑speed fibre connections  
+	\end{itemize}
+	This improves reliability and reduces the likelihood of chunk‑level failures.
+	
+	\subsubsection{Standard Protocols}
+	
+	\begin{itemize}
+		\item AWS S3 Multipart Upload
+		\item tus.io Resumable Upload Protocol
+	\end{itemize}
+	
+	
+	\label{sec:background}
+	\subsection{Latency}
+	Time it takes for data to go from the origin to the destination. This delay encompasses various factors such as:
+	\begin{itemize}
+		\item \textbf{Processing delay} - time it takes for data to be processed by network devices like routers \& switches
+		\item \textbf{Queueing delay} - time spent in queue waiting to be processed by the to the destination host.
+		\item \textbf{Transmission delays} - time it takes to push the packet’s bits into the wire.
+		\item \textbf{Propagation delays} - time the signal takes to propagate through the medium. It would be a signal through an optic cable.
+	\end{itemize}
+	It refers to network’s responsiveness and perceived speed and it is measured in milliseconds. The lower the "latency time" in milliseconds the better
+
+	\subsubsection{Calculations}
+	
+	\begin{flushleft}	
+		\[
+		\begin{aligned}
+			\text{Packet size } (L) &= \text{Packet size} \\
+			\text{Average rate of arrival } (a) &= \frac{\text{packets}}{\text{sec}} \\
+			\text{Bandwidth } (R) &= \frac{b}{\text{sec}} \\
+			\text{Traffic intensity} &= L \cdot \frac{a}{R} \\
+			\text{Propagation delay } (d_{\text{prop}}) &= \frac{m}{s} \\
+			\text{Transmission delay } (d_{\text{trans}}) &= \frac{L}{R} \\
+			\rho &= \frac{1}{R} \\
+			\text{Time of 1st bit arrival (ms)} &= d_{\text{prop}} + \rho
+		\end{aligned}
+		\]
+	\end{flushleft}
+
+	
+	\label{sec:background}
+	\subsection{Jitter}
+	The measure of the variation of latency over time, measured in \textit{milliseconds}. It is the measure of the variability in packet arrival times, which can be caused by:
+	\begin{itemize}
+		\item \textbf{Network congestion}: High traffic volumes causing packets to take longer paths or experience delays.
+		\item \textbf{Routing Changes}: Dynamic changes in the path that data packets take across the network.
+		\item \textbf{Variable Path Lengths}: Differences in the physical distance data packets must travel.
+		\item \textbf{Equipment Limitations}: Older routers with limited processing power struggle to handle modern network traffic volumes. When a router's buffer fills up, it must decide which packets to prioritize and which to delay or drop entirely.
+	\end{itemize}
+	It affects the quality of real-time communication. If the jitter is high then it may cause packet loss, poor audio and video quality transmission, and data streaming interruptions.Thus, jitter is a significant objective to consider in the performance of networks serving real-time applications.
+	
+	\begin{table}[h!]
+		\centering
+		\begin{tabular}{|l|p{6cm}|p{6cm}|}
+			\hline
+			\textbf{Aspect} & \textbf{Latency} & \textbf{Jitter} \\
+			\hline
+			Definition & Time taken for data to travel from source to destination & Variation in latency over time \\
+			\hline
+			Measurement & Typically measured in milliseconds (ms) & Also measured in milliseconds (ms) \\
+			\hline
+			Components & Includes processing delay, queuing delay, transmission delay, propagation delay, etc. & Reflects inconsistency in latency due to network fluctuations \\
+			\hline
+			Impact & Affects overall speed and responsiveness of network connections & Impacts consistency and stability of data transmission \\
+			\hline
+			Nature & Generally a static value & Dynamic and can fluctuate over time \\
+			\hline
+			Examples & 50 ms latency means it takes 50 ms for data to travel from source to destination & Jitter of 5 ms means latency varies by up to 5 ms over time \\
+			\hline
+		\end{tabular}
+		\caption{Comparison between Latency and Jitter}
+	\end{table}
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.8\linewidth]{media/jitter.jpg}
+		\caption{Jitter \& latency speed test}
+		\label{fig:Internet speed test}
+	\end{figure}
+	
+	\label{sec:background}
+	\subsection{Data Processing Paradigm}
+	Data processing plays a role in how efficiently and effectively a system handles varying loads.\\
+	\\\textbf{CAP theorem:} distributed systems can guarantee at most two out of three properties [\textit{Eric Brewer, 2000}]
+	\begin{itemize}
+		\item \textbf{Consistency} -  every read receives the most recent read or an error. All clients sees the same data at same time no matter which node they connect to. For this to work data written to one node must be instantly forwarded \& replicated in all other nodes before a write is deemed successful.
+		\item \textbf{Availability} - every request by a non-failing node must result in a response, without a guarantee it has the most recent version of data.
+		\item \textbf{Partition tolerance} - system continues to operate despite an arbitrary number of messages being dropped/delayed by the network between nodes. In case of a \textit{network partition} failure it must be decided whether:
+		\begin{itemize}
+			\item Cancel the operation, decreasing availability but ensuring consistency.
+			\item Proceed with the operation, providing availability but risk inconsistency.
+		\end{itemize}
+	\end{itemize}	
+	\textbf{Network partition} - division of a computer network into relatively independent subnet either by design to optimize them separately or due to failure of network devices. Distributed software should be partition-tolerant that is even after a network is partitioned, it should still work.
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.5\linewidth, height=0.48\linewidth]{media/CAP.png}
+		\caption{CAP theory properties}
+		\label{fig:CAP theoty}
+	\end{figure}
+	
+	\subsubsection{Batch Processing}
+	Aggregation of data into discrete groups and processing them in a single scheduled operation, typically offline, triggered by time intervals (\textit{e.g. nightly jobs}) or data thresholds (\textit{e.g. 1GB patches}).\\
+	Ideal for:
+	\begin{itemize}
+		\item \textbf{Data warehousing} - central storage of data from multiple sources.
+		\item \textbf{Extract Transform Load (\textit{ETL})} - collection of data from a source reshaping/processing it and moving it to an output.
+		\item Large scale reporting
+	\end{itemize}
+	There are a variety of \textit{ETL} tools for batch processing: \textit{Apache airflow, Hadoop, AWS Data pipeline, Oracle data integration}.\\
+	\\Core steps:
+	\begin{itemize}
+		\item \textbf{Data collection:}\\Accumulation of data from sources into storage le \textit{S3, HDFS}.
+		\item \textbf{Processing:}\\Execute computation/transformation on an entire batch.
+		\item \textbf{Error handling:}\\Retries on batch failures, with \textit{idempotency} ensuring repeated runs don't duplicate outputs (\textit{use of unique-ids like snowflakes for batch identifiers})
+	\end{itemize}
+	
+	\begin{flushleft}	
+		\[
+		\begin{aligned}
+			\text{Throughput} &= \frac{\text{batch size}}{\text{processing time}} \\
+			\text{Latency} &= \text{Batch interval} + \text{processing time} \\
+			\text{Resource utilization} &= \text{Peak usage during processing (\textit{e.g. 80\% CPU for 30min}), idle otherwise.}
+		\end{aligned}
+		\]
+	\end{flushleft}
+	\textbf{Fault tolerance} - use replication \textit{e.g. 3X HDFS} and heartbeats for node liveness, failure trigger job restarts from checkpoints.
+	
+	\subsubsection{Stream Processing}
+	Handle and analyse data in real time or near real time as they arrive. Data streams are then processed as they arrive, involving a series of operations such as filtering, transforming and data aggregation. Allowing real-time implementations like; live analytics, triggering alerts, real-time dashboards.\\
+	\\Core steps:
+	\begin{itemize}
+		\item \textbf{Data ingestion:}\\
+		Consume events from sources like message queues using \textit{CDC} for database changes (\textit{e.g. Kafka topics})
+		\item \textbf{Processing:}\\
+		Apply transformations using frameworks (\textit{like Apache Flink or Kafka streams}).
+		\item \textbf{Output:}\\
+		Emit results to sinks (\textit{e.g. databases, caches}) in real-time.
+		\item \textbf{Error handling:}\\
+		Idempotency for safe retries (\textit{e.g. use unique\_ids}), rate limiting (\textit{e.g. token buckets}) to prevent overload and dead-letter queues for failed events.
+	\end{itemize}
+	\begin{flushleft}	
+		\[
+		\begin{aligned}
+			\text{Throughput} &= \text{N} + \text{node throughput} \\
+			\text{Latency} &= \text{ingress time} + \text{processing time}  + \text{egress time} \\
+			\text{Resource utilization} &= \text{For aggregation, window (\textit{e.g. 5min}) affects memory (\textit{1GB for 1M events/window})}
+		\end{aligned}
+		\]
+	\end{flushleft}
+	\begin{table}[h!]
+		\centering
+		\begin{tabular}{|l|p{6cm}|p{6cm}|}
+			\hline
+			\textbf{Aspect} & \textbf{Batch} & \textbf{Stream} \\
+			\hline
+			Latency & \textbf{High}, data is collected over a period \& processed in chunks at scheduled intervals. & \textbf{Low}, data is handled as it arrives. \\
+			\hline
+			Throughput & High for large batches (\textit{e.g 1TB/hr}) & High for continuous flow (\textit{e.g 1M events/sec}) \\
+			\hline
+			Resources & Peak during runs (\textit{e.g 80\% CPU for 1hr}). & Steady (\textit{e.g 50\% - 60\% CPU continuously}). \\
+			\hline
+			Scalability & Vertical (\textit{e.g larger machines}) or horizontal (\textit{e.g spark clusters}) & Horizontal (\textit{e.g Kafka partitions/brokers}) \\
+			\hline
+			Fault tolerance & Checkpoints (\textit{e.g spark restart from checkpoints}) & Offsets \& replications (\textit{e.g Kafka resumes from last offset}). \\
+			\hline
+		\end{tabular}
+		\caption{Comparison between batch and stream processing}
+	\end{table}
 	
 	% --- Section 4: Kernel-level Optimization ---
 	\section{Kernel-level Optimization}
@@ -251,7 +506,7 @@
 	\end{itemize}
 	.
 	\subsection{Benchmark Design}
-	Description of the Ping-Pong benchmark logic using \texttt{MPI\_Send} and \texttt{MPI\_Recv}.
+	\textbf{Cloudflare speedtest} was used to measure the network download \& upload speed, latency and jitter
 	
 	% --- Section 4: Performance Optimization Strategies ---
 	\section{Optimization Strategies}
@@ -282,11 +537,26 @@
 	% --- Bibliography ---
 	\begin{thebibliography}{9}
 		\bibitem{openmpi} 
-		The Open MPI Project. \textit{Open MPI: A High Performance Message Passing Library}. https://www.open-mpi.org/
+		The Open MPI Project. \textit{Open MPI: A High Performance Message Passing Library}. \textit{https://www.open-mpi.org/}
 		
-		\bibitem{https://www.youtube.com/watch?v=c0C9mQaxsD4} MPI Basics by Tom Nurkkalla. \textit{Introduction to distributed computing with MPI}. https://www.youtube.com/watch?v=c0C9mQaxsD4
+		\bibitem{https://www.youtube.com/watch?v=c0C9mQaxsD4} MPI Basics by Tom Nurkkalla. Introduction to distributed computing with MPI. \textit{https://www.youtube.com/}
 		
-		\bibitem{https://arcca.github.io/intro-mpi/} Introduction to Parallel Programming using MPI. https://arcca.github.io/intro-mpi/
+		\bibitem{https://arcca.github.io/intro-mpi/} Introduction to Parallel Programming using MPI. \textit{https://arcca.github.io/intro-mpi/}
+		
+		\bibitem{https://rookiehpc.org/} RookieHPC, learn about High-Performance Computing. \textit{https://rookiehpc.org/}
+		
+		\bibitem{https://www.geeksforgeeks.org/computer-networks/latency-vs-jitter-in-computer-networks/} Latency vs Jitter in Computer Networks. \textit{https://www.geeksforgeeks.org/}
+		
+		\bibitem{https://speed.cloudflare.com/}Cloudflare internet speed test. \textit{https://speed.cloudflare.com/}
+		
+		\bibitem{https://en.wikipedia.org/wiki/CAP_theorem}CAP theorem \textit{https://en.wikipedia.org/wiki/CAP\_theorem}
+		
+		\bibitem{https://umamahesh.net/batch-vs-stream-processing-a-comprehensive-comparison-of-paradigms-with-use-cases/}Batch vs Stream Processing: \textit{A comprehensive comparison of paradigm}: \textit{https://umamahesh.net/batch-vs-stream-processing-a-comprehensive-comparison-of-paradigms-with-use-cases/}
+		
+		\bibitem{https://www.datacamp.com/blog/batch-vs-stream-processing}Batch vs Stream Processing: \textit{When to Use Each and Why It Matters}. \textit{https://www.datacamp.com/blog/batch-vs-stream-processing}
+		
+		\bibitem{https://www.amazon.com/Parallel-Programming-C-MPI-OpenMP/dp/0070582017?keywords=Parallel+Programming+in+C+With+Mpi+and+Openmp&qid=1684601986&s=books&sr=1-1&linkCode=sl1&tag=freecomputerbooks-20&linkId=5272329a690999da59b8b67c5a0705ab&language=en_US}Parallel programming in C with MPI and openMP \textit{by Michael J. Quinn}
+		
 	\end{thebibliography}
 	
 	
