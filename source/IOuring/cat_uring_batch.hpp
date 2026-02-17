@@ -2,8 +2,8 @@
 // Created by _edd.ie_ on 16/02/2026.
 //
 
-#ifndef CAT_URING_H
-#define CAT_URING_H
+#ifndef CAT_URING_BATCH_H
+#define CAT_URING_BATCH_H
 
 /*
  * Place as many request as the queue length will allow.
@@ -31,277 +31,21 @@
 #include <print>
 #include <algorithm>
 #include <chrono>
+#include "./cat_uring.hpp"
 
-// non-batched version (Submit -> Wait -> Reap) only needs a depth of 1,
-// keeping it at 64 for  a "standard environment" for the benchmark.
-#define QUEUE_DEPTH 64
-#define BLOCK_SZ 4096
-
-/* x86 specific */
-#define read_barrier() __asm__ __volatile__("" ::: "memory")
-#define write_barrier() __asm__ __volatile__("" ::: "memory")
-
-struct app_io_sq_ring
+namespace uring_batch_impl
 {
-    unsigned *head;
-    unsigned *tail;
-    unsigned *ring_mask;
-    unsigned *ring_entries;
-    unsigned *flags;
-    unsigned *array;
-};
-
-struct app_io_cq_ring
-{
-    unsigned *head;
-    unsigned *tail;
-    unsigned *ring_mask;
-    unsigned *ring_entries;
-    struct io_uring_cqe *cqes;
-};
-
-struct submitter
-{
-    int ring_fd;
-    struct app_io_sq_ring sq_ring;
-    struct io_uring_sqe *sqes;
-    struct app_io_cq_ring cq_ring;
-};
-
-struct file_info
-{
-    int fd;
-    off_t file_sz;
-    std::vector<iovec> iovecs; /* Referred by readv/writev */
-
-    // Helper to calculate blocks
-    int get_blocks() const
-    {
-        int blocks = static_cast<int>(file_sz) / BLOCK_SZ;
-        if (file_sz % BLOCK_SZ)
-            blocks++;
-        return blocks;
-    }
-
-    ~file_info()
-    {
-        for (auto &iov : iovecs)
-        {
-            if (iov.iov_base)
-                free(iov.iov_base);
-        }
-
-        if (fd >= 0)
-            close(fd);
-    }
-};
-
-int io_uring_setup(unsigned entries, struct io_uring_params *p)
-{
-    return static_cast<int>(syscall(__NR_io_uring_setup, entries, p));
-}
-
-int io_uring_enter(int ring_fd, unsigned int to_submit,
-                   unsigned int min_complete, unsigned int flags)
-{
-    return static_cast<int>(syscall(__NR_io_uring_enter, ring_fd, to_submit, min_complete,
-                                    flags, NULL, 0));
-}
-
-/*
- * Returns the size of the file whose file descriptor is passed in.
- * Handles regular file and block devices as well.
- */
-off_t get_file_size(int fd)
-{
-    struct stat st;
-    if (fstat(fd, &st) < 0)
-    {
-        perror("fstat");
-        return -1;
-    }
-    if (S_ISBLK(st.st_mode))
-    {
-        unsigned long long bytes;
-        if (ioctl(fd, BLKGETSIZE64, &bytes) != 0)
-        {
-            perror("ioctl");
-            return -1;
-        }
-        return bytes;
-    }
-    else if (S_ISREG(st.st_mode))
-        return st.st_size;
-    return -1;
-}
-
-/*
- * IO_Uring setup
- */
-
-int app_setup_uring(struct submitter *s)
-{
-    struct app_io_sq_ring *sring = &s->sq_ring;
-    struct app_io_cq_ring *cring = &s->cq_ring;
-    struct io_uring_params p{};
-    void *sq_ptr = nullptr;
-    void *cq_ptr = nullptr;
-    /*
-     * Pass in the io_uring_params structure to the io_uring_setup()
-     * call zeroed out.
-     * Set any flags if we need to, this one doesn't
-     * */
-    // memset(&p, 0, sizeof(p)); C
-    s->ring_fd = io_uring_setup(QUEUE_DEPTH, &p);
-    if (s->ring_fd < 0)
-    {
-        perror("Error: io_uring_setup failed");
-        return 1;
-    }
-
-    /*
-     * io_uring communication happens via 2 shared kernel-user space ring buffers,
-     * which can be jointly mapped with a single mmap() call in recent kernels.
-     * While the completion queue is directly manipulated, the submission queue
-     * has an indirection array in between.
-     * */
-    int sring_sz = p.sq_off.array + p.sq_entries * sizeof(unsigned);
-    int cring_sz = p.cq_off.cqes + p.cq_entries * sizeof(struct io_uring_cqe);
-
-    /*
-     * In kernel version 5.4 and above, it is possible to map the submission and
-     * completion buffers with a single mmap() call.
-     * Rather than check for kernel versions,
-     * the recommended way is to just check the features field of the
-     * io_uring_params structure, which is a bit mask.
-     * If the IORING_FEAT_SINGLE_MMAP is set, then
-     * can do away with the second mmap() call
-     * to map the completion ring.
-     * */
-    if (p.features & IORING_FEAT_SINGLE_MMAP)
-    {
-        if (cring_sz > sring_sz)
-        {
-            sring_sz = cring_sz;
-        }
-        cring_sz = sring_sz;
-    }
-
-    /*
-     * Map in the submission and completion queue ring buffers.
-     * Older kernels only map in the submission queue.
-     * */
-    sq_ptr = mmap(0, sring_sz, PROT_READ | PROT_WRITE,
-                  MAP_SHARED | MAP_POPULATE, s->ring_fd,
-                  IORING_OFF_SQ_RING);
-
-    if (sq_ptr == MAP_FAILED)
-    {
-        perror("Error: SQ mmap allocation failed");
-        return 1;
-    }
-
-    if (p.features & IORING_FEAT_SINGLE_MMAP)
-    {
-        cq_ptr = sq_ptr;
-    }
-    else
-    {
-        /* Map in the completion queue ring buffer in older kernels separately */
-        cq_ptr = mmap(0, cring_sz, PROT_READ | PROT_WRITE,
-                      MAP_SHARED | MAP_POPULATE, s->ring_fd,
-                      IORING_OFF_CQ_RING);
-
-        if (cq_ptr == MAP_FAILED)
-        {
-            perror("Error: CQ mmap allocation failed");
-            return 1;
-        }
-    }
-
-    /*
-     * Save useful fields in a global app_io_sq_ring struct
-     * for later easy reference
-     */
-    // sring->head = sq_ptr + p.sq_off.head;
-    // sring->tail = sq_ptr + p.sq_off.tail;
-    // sring->ring_mask = sq_ptr + p.sq_off.ring_mask;
-    // sring->ring_entries = sq_ptr + p.sq_off.ring_entries;
-    // sring->flags = sq_ptr + p.sq_off.flags;
-    // sring->array = sq_ptr + p.sq_off.array;
-
-    /*
-     * static_cast<char*>(sq_ptr): This tells C++,
-     *   "Treat this address as a byte array
-     *   so I can add an offset in bytes."
-     * reinterpret_cast<unsigned*>: This tells C++,
-     *   "Now that you've found the memory address,
-     *   treat the data at the address as an unsigned* ."
-     */
-
-    sring->head = reinterpret_cast<unsigned *>(static_cast<char *>(sq_ptr) + p.sq_off.head);
-    sring->tail = reinterpret_cast<unsigned *>(static_cast<char *>(sq_ptr) + p.sq_off.tail);
-    sring->ring_mask = reinterpret_cast<unsigned *>(static_cast<char *>(sq_ptr) + p.sq_off.ring_mask);
-    sring->ring_entries = reinterpret_cast<unsigned *>(static_cast<char *>(sq_ptr) + p.sq_off.ring_entries);
-    sring->flags = reinterpret_cast<unsigned *>(static_cast<char *>(sq_ptr) + p.sq_off.flags);
-    sring->array = reinterpret_cast<unsigned *>(static_cast<char *>(sq_ptr) + p.sq_off.array);
-
-    /* Map in the submission queue entries array */
-    void *sqes_map = mmap(0, p.sq_entries * sizeof(struct io_uring_sqe),
-                          PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE,
-                          s->ring_fd, IORING_OFF_SQES);
-
-    if (sqes_map == MAP_FAILED)
-    {
-        perror("Error: SQE mmap failed");
-        return 1;
-    }
-
-    s->sqes = static_cast<struct io_uring_sqe *>(sqes_map);
-
-    /*
-     * Save useful fields in a global app_io_cq_ring struct
-     */
-    // cring->head = cq_ptr + p.cq_off.head;
-    // cring->tail = cq_ptr + p.cq_off.tail;
-    // cring->ring_mask = cq_ptr + p.cq_off.ring_mask;
-    // cring->ring_entries = cq_ptr + p.cq_off.ring_entries;
-    // cring->cqes = cq_ptr + p.cq_off.cqes;
-    cring->head = reinterpret_cast<unsigned *>(static_cast<char *>(cq_ptr) + p.cq_off.head);
-    cring->tail = reinterpret_cast<unsigned *>(static_cast<char *>(cq_ptr) + p.cq_off.tail);
-    cring->ring_mask = reinterpret_cast<unsigned *>(static_cast<char *>(cq_ptr) + p.cq_off.ring_mask);
-    cring->ring_entries = reinterpret_cast<unsigned *>(static_cast<char *>(cq_ptr) + p.cq_off.ring_entries);
-    cring->cqes = reinterpret_cast<struct io_uring_cqe *>(static_cast<char *>(cq_ptr) + p.cq_off.cqes);
-
-    return 0;
-}
-
-/*
- * Output a string of characters of len length to stdout.
- * Buffered output for efficient,
- * As it needs to output character-by-character.
- * */
-void output_to_console(char *buf, int len)
-{
-    while (len--)
-    {
-        fputc(*buf++, stdout);
-    }
-}
-
-namespace uring_impl
-{
-
     /*
      * Read completion events from completion queue.
      * Get the data buffer that will have the file data
      * Print it to the console.
      * */
-    void read_from_cq(struct submitter *s, bool quiet = false)
+    int read_from_cq(struct submitter *s, bool quiet = false)
     {
         struct app_io_cq_ring *cring = &s->cq_ring;
         struct io_uring_cqe *cqe;
         unsigned head = *cring->head;
+        int count = 0;
 
         while (true)
         {
@@ -330,9 +74,11 @@ namespace uring_impl
                     output_to_console(static_cast<char *>(fi->iovecs[i].iov_base), fi->iovecs[i].iov_len);
             }
             head++;
+            count++;
         }
         write_barrier();
         *cring->head = head;
+        return count;
     }
 
     /*
@@ -443,17 +189,23 @@ namespace uring_impl
          * io_uring_enter() call to wait until min_complete events (the 3rd param)
          * complete.
          * */
-        int ret = io_uring_enter(s->ring_fd, 1, 1, IORING_ENTER_GETEVENTS);
-        if (ret < 0)
-        {
-            perror("Error: Failed to subit events, io_uring_enter");
-            return -1;
-        }
+        // int ret = io_uring_enter(s->ring_fd, 1, 1, IORING_ENTER_GETEVENTS);
+        // if (ret < 0)
+        // {
+        //     perror("Error: Failed to subit events, io_uring_enter");
+        //     return -1;
+        // }
 
         return static_cast<ssize_t>(file_sz);
     }
 
-    int uring_cat(const int argc, char *const argv[])
+    unsigned get_sq_occupancy(struct submitter *s)
+    {
+        // Current tail minus current head = number of entries the kernel hasn't processed yet
+        return *s->sq_ring.tail - *s->sq_ring.head;
+    }
+
+    int uring_batch_cat(const int argc, char *const argv[])
     {
         bool quiet = false;
         int opt;
@@ -462,11 +214,16 @@ namespace uring_impl
         optind = 1;
 
         // Parse flags
-        while ((opt = getopt(argc, argv, "qvuba")) != -1)
+        while ((opt = getopt(argc, argv, "q")) != -1)
         {
             if (opt == 'q')
             {
                 quiet = true;
+            }
+            else
+            {
+                std::println(stderr, "Usage: {} [-q] <filename1> ...", argv[0]);
+                return 1;
             }
         }
 
@@ -494,21 +251,55 @@ namespace uring_impl
             return 1;
         }
 
+        int files_to_process = 0;
+        int files_completed = 0;
         size_t total_bytes = 0;
 
         // Start timing
         auto start = std::chrono::high_resolution_clock::now();
 
+        // PASS 1: Submit everything
         for (int i = optind; i < argc; i++)
         {
+
+            // --- SPACE CHECK ---
+            // If the SQ is full, we MUST reap at least one completion to make space
+            while (get_sq_occupancy(s.get()) >= QUEUE_DEPTH)
+            {
+                // Tell kernel to process what's there and wait for 1 completion
+                io_uring_enter(s->ring_fd, get_sq_occupancy(s.get()), 1, IORING_ENTER_GETEVENTS);
+                files_completed += read_from_cq(s.get(), quiet);
+            }
+
             ssize_t bytes_read = submit_to_sq(argv[i], s.get());
             if (bytes_read < 0)
             {
                 std::println(stderr, "Error reading file: {}", argv[i]);
                 return 1;
             }
-            read_from_cq(s.get(), quiet);
             total_bytes += bytes_read;
+            files_to_process++;
+        }
+
+        // Send the last batch remaining in the SQ
+        unsigned final_batch = get_sq_occupancy(s.get());
+        if (final_batch > 0)
+        {
+            io_uring_enter(s->ring_fd, final_batch, 1, IORING_ENTER_GETEVENTS);
+        }
+
+        // PASS 2: Reap everything
+        while (files_completed < files_to_process)
+        {
+            // This will now process all available CQEs in the ring
+            files_completed += read_from_cq(s.get(), quiet);
+
+            // If we haven't finished yet but the queue is empty,
+            // wait for more events.
+            if (files_completed < files_to_process)
+            {
+                io_uring_enter(s->ring_fd, 0, 1, IORING_ENTER_GETEVENTS);
+            }
         }
 
         // End timing
@@ -540,4 +331,4 @@ namespace uring_impl
 
 }
 
-#endif // CAT_URING_H
+#endif // CAT_URING_BATCH_H
