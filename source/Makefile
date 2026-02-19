@@ -112,7 +112,7 @@ read1: $(OUT_DIR)/$(TARGET)
 
 read1Q: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Quiet Run (Raw I/O)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) -q ./resource/test_input.txt
+	@time ./$(OUT_DIR)/$(TARGET) -q ./resource/test_input.txt
 
 
 readAll: $(OUT_DIR)/$(TARGET)

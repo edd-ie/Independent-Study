@@ -35,6 +35,7 @@
 
 namespace uring_batch_impl
 {
+
     /*
      * Read completion events from completion queue.
      * Get the data buffer that will have the file data
