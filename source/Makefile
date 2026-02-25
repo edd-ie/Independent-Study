@@ -130,9 +130,14 @@ broadcast: $(OUT_DIR)/$(TARGET)
 
 
 # Check for memory leaks (Tests the unique_ptr cleanup for multiple files)
-memcheck: $(OUT_DIR)/$(TARGET)
+memcheckRead: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(BLUE)[Memcheck]$(RESET) Verifying RAII cleanup for $(words $(TEST_FILES)) files..."
 	@valgrind --leak-check=full --show-leak-kinds=all -s ./$(OUT_DIR)/$(TARGET) -q $(TEST_FILES)
+	
+memcheckBroadcast: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(BLUE)[Memcheck]$(RESET) Verifying RAII cleanup for $(words $(TEST_FILES)) files..."
+	@valgrind --leak-check=full --show-leak-kinds=all -s ./$(OUT_DIR)/$(TARGET) ./input.fifo ./out1.fifo ./out2.fifo
+
 
 clean:
 	@echo -e "$(RED)[Clean]$(RESET) Removing $(BUILD_DIR)"

@@ -34,19 +34,11 @@ namespace broadcaster
     {
         OpType type;
         Buffer *buffer;
-        int fd; // only for write
-        size_t bytes_to_write;
+        int fd;
+        size_t bytes_to_write; // only for write
     };
 
-    ssize_t FdGetFileSize(int fd)
-    {
-        struct stat st{};
-        if (fstat(fd, &st) < 0)
-            return -1;
-        return st.st_size;
-    }
-
-    void submit_read(io_uring *ring, int inputFD, Request *read_pipe)
+    void submit_read(io_uring *ring, Request *read_pipe)
     {
         io_uring_sqe *sqe = io_uring_get_sqe(ring);
         if (!sqe)
@@ -55,7 +47,7 @@ namespace broadcaster
             exit(1);
         }
 
-        io_uring_prep_read(sqe, inputFD, read_pipe->buffer->data, CHUNK, 0);
+        io_uring_prep_read(sqe, read_pipe->fd, read_pipe->buffer->data, CHUNK, 0);
         io_uring_sqe_set_data(sqe, read_pipe);
 
         if (io_uring_submit(ring) < 0)
@@ -64,7 +56,7 @@ namespace broadcaster
         }
     }
 
-    void submit_write(io_uring *ring, int outputFD, Request *write_pipe)
+    void submit_write(io_uring *ring, Request *write_pipe)
     {
         io_uring_sqe *sqe = io_uring_get_sqe(ring);
         if (!sqe)
@@ -73,7 +65,7 @@ namespace broadcaster
             exit(1);
         }
 
-        io_uring_prep_write(sqe, outputFD, write_pipe->buffer->data, write_pipe->bytes_to_write, 0);
+        io_uring_prep_write(sqe, write_pipe->fd, write_pipe->buffer->data, write_pipe->bytes_to_write, 0);
         io_uring_sqe_set_data(sqe, write_pipe);
     }
 
@@ -94,7 +86,7 @@ namespace broadcaster
         }
 
         Request *read_pipe = new Request{.type = OpType::Read, .buffer = new Buffer(), .fd = inputFD, .bytes_to_write = 0};
-        submit_read(&ring, inputFD, read_pipe);
+        submit_read(&ring, read_pipe);
 
         while (true)
         {
@@ -112,9 +104,9 @@ namespace broadcaster
 
             if (res < 0)
             {
-                if (res == -EAGAIN)
+                if (res == -EAGAIN) // pipe is currently empty.
                 {
-                    submit_read(&ring, inputFD, data);
+                    submit_read(&ring, data);
                     continue;
                 }
                 std::println(stderr, "CQE Error: {}", res);
@@ -136,7 +128,7 @@ namespace broadcaster
                         .fd = outFD,
                         .bytes_to_write = static_cast<size_t>(res)};
 
-                    submit_write(&ring, outFD, write_req);
+                    submit_write(&ring, write_req);
                 }
 
                 if (io_uring_submit(&ring) < 0)
@@ -160,10 +152,18 @@ namespace broadcaster
                         .buffer = shared_buf,
                         .fd = inputFD,
                         .bytes_to_write = 0};
-                    submit_read(&ring, inputFD, next_read);
+                    submit_read(&ring, next_read);
                 }
             }
         }
+
+        if (read_pipe)
+        {
+            delete read_pipe->buffer;
+            delete read_pipe;
+        }
+        close(inputFD);
+        io_uring_queue_exit(&ring);
     }
 }
 #endif // BROADCASTER_H
