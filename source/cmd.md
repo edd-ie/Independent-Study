@@ -11,8 +11,8 @@ This demonstrates taking a static file, splitting it, and sending it to two diff
 ```bash
 cat < out1.fifo
 
-# Persisten
-while true; do cat < out2.fifo; done
+# Persistent
+while true; do cat < out1.fifo; done
 ```
 
 2. **Terminal 2 (The File Listener):** Wait for data and save it to a physical file named `captured.txt`.
