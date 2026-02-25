@@ -112,7 +112,7 @@ read1: $(OUT_DIR)/$(TARGET)
 
 read1Q: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Quiet Run (Raw I/O)]$(RESET)"
-	@time ./$(OUT_DIR)/$(TARGET) -q ./resource/test_input.txt
+	@./$(OUT_DIR)/$(TARGET) -q ./resource/test_input.txt
 
 
 readAll: $(OUT_DIR)/$(TARGET)
@@ -124,6 +124,9 @@ readAllQ: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Quiet Run (Raw I/O Performance)]$(RESET)"
 	@./$(OUT_DIR)/$(TARGET) -q $(TEST_FILES)
 
+broadcast: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Running broadcaster (2 listener)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) ./input.fifo ./out1.fifo ./out2.fifo
 
 
 # Check for memory leaks (Tests the unique_ptr cleanup for multiple files)
