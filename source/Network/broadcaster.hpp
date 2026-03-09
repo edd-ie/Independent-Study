@@ -13,7 +13,7 @@
 #include <vector>
 #include "Request.hpp"
 
-namespace broadcaster
+namespace Network
 {
     const int Q_DEPTH = 64;
     const int CHUNK = 4096;

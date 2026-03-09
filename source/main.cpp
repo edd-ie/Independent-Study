@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    broadcaster::broadcast(inputFD, outputFDs);
+    Network::broadcast(inputFD, outputFDs);
 
     return 0;
 }
