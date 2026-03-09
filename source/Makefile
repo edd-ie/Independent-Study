@@ -5,7 +5,7 @@
 # ------------------------------------------------------------
 
 TARGET      := main
-SRC_DIRS    := . IOuring mpi openmp util
+SRC_DIRS    := . IOuring mpi openmp util Network
 BUILD_DIR   := build
 DEBUG_DIR   := $(BUILD_DIR)/debug
 RELEASE_DIR := $(BUILD_DIR)/release
@@ -20,7 +20,6 @@ TEST_FILES := $(wildcard resource/test_data/test_file_*.txt)
 CXX      := mpicxx
 FORMAT   := clang-format
 
-# Add -luring if you are using io_uring specifically
 LIBS     := -luring
 
 

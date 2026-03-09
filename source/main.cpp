@@ -3,7 +3,7 @@
 #include <print>
 #include <vector>
 #include <csignal> // For SIGPIPE
-#include "Network/broadcaster.h"
+#include "Network/broadcaster.hpp"
 
 int main(int argc, char **argv)
 {
@@ -16,29 +16,36 @@ int main(int argc, char **argv)
     // If a reader closes their pipe, prevent broadcaster from crash!
     signal(SIGPIPE, SIG_IGN);
 
-    char *const host = argv[1];
-    std::vector<int> clients;
-    clients.reserve(argc - 2);
+    std::vector<std::shared_ptr<Util::IO_Handle>> outputFDs;
+    outputFDs.reserve(argc - 2);
+
+    int source = open(argv[1], O_RDONLY);
+    if (source < 0)
+    {
+        std::println(stderr, "Error opening file: {}", argv[1]);
+        exit(1);
+    }
+
+    auto inputFD = std::make_shared<Util::IO_Handle>(source);
 
     for (int i = 2; i < argc; i++)
     {
         int fd = open(argv[i], O_WRONLY | O_NONBLOCK);
         if (fd < 0)
         {
-            // fails with ENXIO, means no one is reading the pipe yet.
             std::println(stderr, "Warning: No reader on {}, error: {}", argv[i], errno);
             continue;
         }
-        clients.push_back(fd);
+        outputFDs.push_back(std::make_shared<Util::IO_Handle>(fd));
     }
 
-    if (clients.empty())
+    if (outputFDs.empty())
     {
         std::println(stderr, "Error: No output pipes could be opened.");
         return 1;
     }
 
-    broadcaster::broadcast(host, clients);
+    broadcaster::broadcast(inputFD, outputFDs);
 
     return 0;
 }
