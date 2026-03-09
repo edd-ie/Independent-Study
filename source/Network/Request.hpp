@@ -11,7 +11,8 @@ namespace Network
     enum class OpType
     {
         Read,
-        Write
+        Write,
+        Splice
     };
 
     class Request

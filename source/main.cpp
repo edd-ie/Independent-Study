@@ -4,6 +4,7 @@
 #include <vector>
 #include <csignal> // For SIGPIPE
 #include "Network/broadcaster.hpp"
+#include "Network/broadcastSplice.hpp"
 
 int main(int argc, char **argv)
 {
@@ -45,7 +46,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    Network::broadcast(inputFD, outputFDs);
+    // Network::broadcast(inputFD, outputFDs);
+    Network::broadcastSplice(inputFD, outputFDs);
 
     return 0;
 }
