@@ -5,6 +5,7 @@
 #include <csignal> // For SIGPIPE
 #include "Network/broadcaster.hpp"
 #include "Network/broadcastSplice.hpp"
+#include "Network/broadcastTee.hpp"
 
 int main(int argc, char **argv)
 {
@@ -47,7 +48,8 @@ int main(int argc, char **argv)
     }
 
     // Network::broadcast(inputFD, outputFDs);
-    Network::broadcastSplice(inputFD, outputFDs);
+    // Network::broadcastSplice(inputFD, outputFDs);
+    Network::broadcastTee(inputFD, outputFDs);
 
     return 0;
 }

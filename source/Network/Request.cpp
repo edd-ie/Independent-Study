@@ -29,4 +29,9 @@ namespace Network
         return buffer;
     }
 
+    void Request::setType(OpType new_Type)
+    {
+        type = new_Type;
+    }
+
 } // namespace Network

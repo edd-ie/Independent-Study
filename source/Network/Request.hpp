@@ -12,7 +12,8 @@ namespace Network
     {
         Read,
         Write,
-        Splice
+        Splice,
+        Tee
     };
 
     class Request
@@ -38,6 +39,7 @@ namespace Network
         u_int8_t *getData();
         size_t bytes();
         OpType getType();
+        void setType(OpType);
         std::shared_ptr<std::vector<uint8_t>> getSharedBuffer();
     };
 

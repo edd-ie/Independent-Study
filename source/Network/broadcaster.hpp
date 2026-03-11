@@ -1,5 +1,4 @@
-#ifndef BROADCASTER_H
-#define BROADCASTER_H
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -142,7 +141,7 @@ namespace Network
 
                 if (io_uring_submit(&ring) < 0)
                 {
-                    std::println(stderr, "submit for read failed");
+                    std::println(stderr, "submit for write failed");
                 }
             }
             else if (data->getType() == Network::OpType::Write)
@@ -157,4 +156,3 @@ namespace Network
         io_uring_queue_exit(&ring);
     }
 }
-#endif // BROADCASTER_H
