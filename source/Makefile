@@ -87,7 +87,7 @@ $(OUT_DIR)/%.o: %.cpp
 
 
 #files
-input = ./resource/test_input.txt
+input = ./resource/data.txt
 
 
 # ------------------------------------------------------------
@@ -111,49 +111,49 @@ test: $(OUT_DIR)/$(TARGET)	@echo -e "$(GREEN)[Test]$(RESET) Running with $(n) pr
 
 readv: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 1 ./resource/test_input.txt 1
+	@./$(OUT_DIR)/$(TARGET) 1 $(input) 1
 
 readv2: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 1 ./resource/test_input.txt 2
+	@./$(OUT_DIR)/$(TARGET) 1 $(input) 2
 
 readvAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 1 ./resource/test_input.txt 4
+	@./$(OUT_DIR)/$(TARGET) 1 $(input) 4
 
 uring: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 2 ./resource/test_input.txt 1
+	@./$(OUT_DIR)/$(TARGET) 2 $(input) 1
 
 uring2: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 2 ./resource/test_input.txt 2
+	@./$(OUT_DIR)/$(TARGET) 2 $(input) 2
 
 
 uringAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 2 ./resource/test_input.txt 4
+	@./$(OUT_DIR)/$(TARGET) 2 $(input) 4
 
 
 splice: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 3 ./resource/test_input.txt 1
+	@./$(OUT_DIR)/$(TARGET) 3 $(input) 1
 splice2: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 3 ./resource/test_input.txt 2
+	@./$(OUT_DIR)/$(TARGET) 3 $(input) 2
 spliceAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 3 ./resource/test_input.txt 4
+	@./$(OUT_DIR)/$(TARGET) 3 $(input) 4
 
 tee: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 4 ./resource/test_input.txt 1
+	@./$(OUT_DIR)/$(TARGET) 4 $(input) 1
 tee2: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 4 ./resource/test_input.txt 2
+	@./$(OUT_DIR)/$(TARGET) 4 $(input) 2
 teeAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 4 ./resource/test_input.txt 4
+	@./$(OUT_DIR)/$(TARGET) 4 $(input) 4
 
 
 clean:

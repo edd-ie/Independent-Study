@@ -112,7 +112,7 @@ namespace Network
         };
 
         submit_batch();
-        submit_batch();
+        // submit_batch();
 
         while (true)
         {
