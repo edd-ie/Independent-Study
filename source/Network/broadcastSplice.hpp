@@ -14,7 +14,7 @@ namespace Network
     const int SPLICE_Q_DEPTH = 64;
     const int SPLICE_CHUNK = 4096;
 
-    void submit_splice(io_uring *ring, std::shared_ptr<Util::IO_Handle> inputFD, std::unique_ptr<Network::Request> request)
+    void submit_splice(io_uring *ring, std::shared_ptr<IO_Handle> inputFD, std::unique_ptr<Network::Request> request)
     {
         io_uring_sqe *sqe = io_uring_get_sqe(ring);
         if (!sqe)
@@ -28,7 +28,7 @@ namespace Network
         io_uring_sqe_set_data(sqe, raw_ptr);
     }
 
-    void broadcastSplice(std::shared_ptr<Util::IO_Handle> inputFD, std::vector<std::shared_ptr<Util::IO_Handle>> &outputFDs)
+    void broadcastSplice(std::shared_ptr<IO_Handle> inputFD, std::vector<std::shared_ptr<IO_Handle>> &outputFDs)
     {
         io_uring ring{};
         if (io_uring_queue_init(SPLICE_Q_DEPTH, &ring, 0) < 0)
@@ -43,7 +43,7 @@ namespace Network
         {
             splice_pending = outputFDs.size();
             auto buffer = std::make_shared<std::vector<uint8_t>>(SPLICE_CHUNK);
-            for (std::shared_ptr<Util::IO_Handle> outFD : outputFDs)
+            for (std::shared_ptr<IO_Handle> outFD : outputFDs)
             {
 
                 auto req = std::make_unique<Network::Request>(
@@ -90,7 +90,7 @@ namespace Network
 
                     outputFDs.erase(
                         std::remove_if(outputFDs.begin(), outputFDs.end(),
-                                       [&](const std::shared_ptr<Util::IO_Handle> &h)
+                                       [&](const std::shared_ptr<IO_Handle> &h)
                                        {
                                            return h->native_handle() == data->getFile();
                                        }),

@@ -2,81 +2,148 @@
 #include <fcntl.h>
 #include <print>
 #include <vector>
+#include <string>
+#include <span>
 #include <csignal> // For SIGPIPE
-#include "Network/broadcaster.hpp"
-#include "Network/broadcastSplice.hpp"
 #include "Network/broadcastTee.hpp"
+#include "file_system/IO_Handle.hpp"
+#include <cerrno>
+#include <system_error>
+#include <filesystem>
+#include "file_system/Manage_Pipe.hpp"
+#include <fstream>
+
+int get_system_pipe_limit(int requested_size = 1024 * 1024)
+{
+    std::ifstream file("/proc/sys/fs/pipe-max-size");
+    int system_max;
+    if (file >> system_max)
+    {
+        return (requested_size < system_max) ? requested_size : system_max;
+    }
+    return 65536;
+}
 
 int main(int argc, char **argv)
 {
-    if (argc < 3)
+    if (argc < 4)
     {
-        std::println(stderr, "Usage: {} <input_fifo> <output_fifo1> [output_fifo2...]", argv[0]);
-        return 1;
+        std::println(stderr, "Broadcaster usage: {} <mode> <input_file> <num_output>", argv[0]);
+        return EINVAL;
     }
 
-    // If a reader closes their pipe, prevent broadcaster from crash!
     signal(SIGPIPE, SIG_IGN);
 
-    std::vector<std::shared_ptr<Util::IO_Handle>> outputFDs;
-    outputFDs.reserve(argc - 2);
-
-    int source = open(argv[1], O_RDONLY);
+    int source = open(argv[2], O_RDONLY);
     if (source < 0)
     {
-        std::println(stderr, "Error opening file: {}", argv[1]);
-        exit(1);
+        std::println(stderr, "Error opening file: {}", argv[2]);
+        return EBADFD;
     }
 
-    auto inputFD = std::make_shared<Util::IO_Handle>(source);
+    const int MODE = atoi(argv[1]);
+    const int COPIES = atoi(argv[3]);
 
-    for (int i = 2; i < argc; i++)
+    std::string dir = std::format("./resource/{}/{}", MODE, (COPIES == 1) ? "Single" : (COPIES == 2) ? "Dual"
+                                                                                                     : "Multi");
+    std::filesystem::create_directories(std::format("{}", dir));
+
+    IO_Handle source_fd(source);
+    std::vector<IO_Handle> destination_fds;
+    destination_fds.reserve(COPIES);
+
+    for (int i = 0; i < COPIES; i++)
     {
-        int fd = open(argv[i], O_WRONLY | O_NONBLOCK);
+        std::string name = std::format("{}/output_{}.txt", dir, i);
+        int fd = open(name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (fd < 0)
         {
-            std::println(stderr, "Warning: No reader on {}, error: {}", argv[i], errno);
-            continue;
+            std::println(stderr, "Warning: No reader on {}, error: {}", name, errno);
+            exit(EIO);
         }
-        outputFDs.push_back(std::make_shared<Util::IO_Handle>(fd));
+        IO_Handle file(fd);
+        file.set_name(name);
+        destination_fds.push_back(std::move(file));
     }
 
-    if (outputFDs.empty())
+    std::span<IO_Handle> dest_files(destination_fds);
+
+    if (MODE > 2)
     {
-        std::println(stderr, "Error: No output pipes could be opened.");
-        return 1;
-    }
+        try
+        {
+            int max_allowed = get_system_pipe_limit();
 
-    // Network::broadcast(inputFD, outputFDs);
-    // Network::broadcastSplice(inputFD, outputFDs);
-    Network::broadcastTee(inputFD, outputFDs);
+            std::vector<ManagedPipe> pipe_storage;
+            pipe_storage.reserve(COPIES + 1);
+
+            pipe_storage.emplace_back(dir, 0);
+            auto &in_pipe = pipe_storage.back();
+
+            int fd;
+            if ((fd = open(in_pipe.c_str(), O_RDWR | O_NONBLOCK)) < 0)
+            {
+                std::println(stderr, "Error opening file: {}", in_pipe.c_str());
+                return EBADFD;
+            }
+
+            IO_Handle input_w(fd);
+            IO_Handle input_r(dup(fd));
+
+            fcntl(fd, F_SETPIPE_SZ, max_allowed);
+
+            input_w.set_name(in_pipe.name());
+            input_r.set_name(in_pipe.name());
+
+            std::vector<IO_Handle> output_pipes_w;
+            output_pipes_w.reserve(COPIES);
+            std::vector<IO_Handle> output_pipes_r;
+            output_pipes_r.reserve(COPIES);
+
+            for (int i = 0; i < COPIES; i++)
+            {
+                pipe_storage.emplace_back(dir, i + 1);
+                auto &pipe_out = pipe_storage.back();
+
+                if ((fd = open(pipe_out.c_str(), O_RDWR | O_NONBLOCK)) < 0)
+                {
+                    std::println(stderr, "Error opening file: {}", pipe_out.c_str());
+                    return EBADFD;
+                }
+
+                IO_Handle file_w(fd);
+                IO_Handle file_r(dup(fd));
+
+                fcntl(fd, F_SETPIPE_SZ, max_allowed);
+
+                file_w.set_name(pipe_out.name());
+                file_r.set_name(pipe_out.name());
+
+                output_pipes_w.push_back(std::move(file_w));
+                output_pipes_r.push_back(std::move(file_r));
+            }
+
+            std::span<IO_Handle> dest_write_pipe{output_pipes_w};
+            std::span<IO_Handle> dest_read_pipe{output_pipes_r};
+
+            if (MODE == 2)
+            {
+            }
+            else
+            {
+                Network::broadcastTee(
+                    source_fd,
+                    input_w, input_r,
+                    dest_files,
+                    dest_write_pipe, dest_read_pipe);
+            }
+        }
+        catch (std::system_error &e)
+        {
+            std::println(stderr, "System Error: {}", e.what());
+            return EIO;
+        }
+    }
 
     return 0;
 }
-
-// void runIO(int argc, char **argv)
-// {
-//     // --- 1. Test readv() Implementation ---
-//     std::println("\n>>> STARTING READV TEST");
-//     optind = 1; // RESET getopt pointer
-//     readv_impl::readV_cat(argc, argv);
-
-//     // --- 2. Test io_uring Implementation ---
-//     std::println("\n>>> STARTING IO_URING TEST");
-//     optind = 1;
-//     // RESET getopt pointer
-//     uring_impl::uring_cat(argc, argv);
-
-//     // --- 3. Test io_uring_batch Implementation ---
-//     std::println("\n>>> STARTING IO_URING BATCH-PROCESSING TEST");
-//     optind = 1;
-//     // RESET getopt pointer
-//     uring_batch_impl::uring_batch_cat(argc, argv);
-
-//     // --- 4. Test io_uring_batch Implementation ---
-//     std::println("\n>>> STARTING IO_URING ASYNC BATCH-PROCESSING TEST");
-//     optind = 1;
-//     // TODO: fix infinite loop
-//     // RESET getopt pointer
-//     // uring_batch_async_impl::uring_batch_async_cat(argc, argv);
-// }

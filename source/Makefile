@@ -5,7 +5,7 @@
 # ------------------------------------------------------------
 
 TARGET      := main
-SRC_DIRS    := . IOuring mpi openmp util Network
+SRC_DIRS    := . IOuring mpi openmp file_system Network
 BUILD_DIR   := build
 DEBUG_DIR   := $(BUILD_DIR)/debug
 RELEASE_DIR := $(BUILD_DIR)/release
@@ -86,6 +86,9 @@ $(OUT_DIR)/%.o: %.cpp
 -include $(DEPS)
 
 
+#files
+input = ./resource/test_input.txt
+
 
 # ------------------------------------------------------------
 # Utility Targets
@@ -104,38 +107,53 @@ test: $(OUT_DIR)/$(TARGET)	@echo -e "$(GREEN)[Test]$(RESET) Running with $(n) pr
 
 
 # Specialized test for your readv-io_uring/cat logic
-read1: $(OUT_DIR)/$(TARGET)
-	@echo -e "$(GREEN)[Standard Run]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) ./resource/test_input.txt
 
 
-read1Q: $(OUT_DIR)/$(TARGET)
-	@echo -e "\n$(GREEN)[Quiet Run (Raw I/O)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) -q ./resource/test_input.txt
+readv: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 1 ./resource/test_input.txt 1
+
+readv2: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 1 ./resource/test_input.txt 2
+
+readvAll: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 1 ./resource/test_input.txt 4
+
+uring: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 2 ./resource/test_input.txt 1
+
+uring2: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 2 ./resource/test_input.txt 2
 
 
-readAll: $(OUT_DIR)/$(TARGET)
-	@echo -e "$(GREEN)[Standard Run - All Files]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) $(TEST_FILES)
+uringAll: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 2 ./resource/test_input.txt 4
 
 
-readAllQ: $(OUT_DIR)/$(TARGET)
-	@echo -e "\n$(GREEN)[Quiet Run (Raw I/O Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) -q $(TEST_FILES)
+splice: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 3 ./resource/test_input.txt 1
+splice2: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 3 ./resource/test_input.txt 2
+spliceAll: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 3 ./resource/test_input.txt 4
 
-broadcast: $(OUT_DIR)/$(TARGET)
-	@echo -e "\n$(GREEN)[Running broadcaster (2 listener)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) ./input.fifo ./out1.fifo ./out2.fifo
-
-
-# Check for memory leaks (Tests the unique_ptr cleanup for multiple files)
-memcheckRead: $(OUT_DIR)/$(TARGET)
-	@echo -e "$(BLUE)[Memcheck]$(RESET) Verifying RAII cleanup for $(words $(TEST_FILES)) files..."
-	@valgrind --leak-check=full --show-leak-kinds=all -s ./$(OUT_DIR)/$(TARGET) -q $(TEST_FILES)
-	
-memcheckBroadcast: $(OUT_DIR)/$(TARGET)
-	@echo -e "$(BLUE)[Memcheck]$(RESET) Verifying RAII cleanup for $(words $(TEST_FILES)) files..."
-	@valgrind --leak-check=full --show-leak-kinds=all -s ./$(OUT_DIR)/$(TARGET) ./input.fifo ./out1.fifo ./out2.fifo
+tee: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 4 ./resource/test_input.txt 1
+tee2: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 4 ./resource/test_input.txt 2
+teeAll: $(OUT_DIR)/$(TARGET)
+	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
+	@./$(OUT_DIR)/$(TARGET) 4 ./resource/test_input.txt 4
 
 
 clean:

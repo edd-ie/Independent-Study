@@ -1,7 +1,157 @@
-A named pipe is a named, one-way or duplex pipe for communication between the pipe server and one or more pipe clients. All instances of a named pipe share the same pipe name, but each instance has its own buffers and handles, and provides a separate conduit for client/server communication. The use of instances enables multiple pipe clients to use the same named pipe simultaneously.
+if (outputFDs.empty())
+            exit(ECANCELED);
 
-Any process can access named pipes, subject to security checks, making named pipes an easy form of communication between related or unrelated processes.
+        io_uring ring{};
+        if (io_uring_queue_init(64, &ring, 0) < 0)
+        {
+            std::println(stderr, "Failure to init queue!");
+            exit(EIO);
+        }
 
-Any process can act as both a server and a client, making peer-to-peer communication possible. As used here, the term pipe server refers to a process that creates a named pipe, and the term pipe client refers to a process that connects to an instance of a named pipe. The server-side function for instantiating a named pipe is CreateNamedPipe. The server-side function for accepting a connection is ConnectNamedPipe. A client process connects to a named pipe by using the CreateFile or CallNamedPipe function.
+        int retries = 0;
+        unsigned timeout = 5;
 
-Named pipes can be used to provide communication between processes on the same computer or between processes on different computers across a network. If the server service is running, all named pipes are accessible remotely. If you intend to use a named pipe locally only, deny access to NT AUTHORITY\NETWORK or switch to local RPC.
+        std::list<Network::Request> requests;
+        size_t pending_completions = 0;
+
+        auto perform_tee = [&]()
+        {
+            for (auto &item : outputFDs.subspan(0, outputFDs.size() - 1))
+            {
+
+                auto &ref = requests.emplace_back(Network::OpType::Tee,
+                                                  std::vector<uint8_t>(),
+                                                  item, 4096);
+                if (int res = submit_tee(ring, inputFD, ref) != 0)
+                {
+                    std::println(stderr, "Error unable to sumbit tee requests: {}", res);
+                    io_uring_queue_exit(&ring);
+                    exit(ECANCELED);
+                }
+            }
+            io_uring_submit(&ring);
+            pending_completions = requests.size();
+        };
+
+        perform_tee();
+
+        while (!outputFDs.empty())
+        {
+            int ret = io_uring_submit_and_wait(&ring, pending_completions);
+            if (ret < 0)
+                break;
+
+            std::vector<io_uring_cqe *> cqes(pending_completions);
+            unsigned count = io_uring_peek_batch_cqe(&ring, cqes.data(), pending_completions);
+            for (unsigned i = 0; i < count; i++)
+            {
+                int res = cqes[i]->res;
+                void *user_data = io_uring_cqe_get_data(cqes[i]);
+                Network::Request *req = static_cast<Network::Request *>(user_data);
+
+                if (res < 0)
+                {
+                    if (res == -EAGAIN)
+                    {
+                        // If pipe is empty/full,retry this batch later
+                    }
+                    else
+                    {
+                        std::println(stderr, "Error on {}: Dead client {}", res, req->get_name());
+                        // io_uring_queue_exit(&ring);
+                        //  exit(EOWNERDEAD);
+                    }
+                }
+                else if (res == 0)
+                {
+                    // if (retries == 3)
+                    // {
+                    //     // EOF on input or pipe closed
+                    //     std::println("Stream ended.");
+                    //     io_uring_queue_exit(&ring);
+                    //     exit(ESTRPIPE);
+                    // }
+                    std::println("Timeout reached ({}s). No data yet, retrying submission...", timeout);
+                    // sleep(timeout);
+                    retries++;
+
+                    pending_completions = 0;
+                    perform_tee();
+                }
+                pending_completions--;
+            }
+            io_uring_cq_advance(&ring, count);
+
+            if (pending_completions == 0)
+            {
+                requests.clear();
+                submit_splice(ring, inputFD, outputFDs[outputFDs.size() - 1], 4096);
+                io_uring_cqe *cqe;
+                ret = io_uring_wait_cqe(&ring, &cqe);
+                if (ret < 0)
+                {
+                    if (ret == -EAGAIN)
+                    {
+                        // If pipe is empty/full,retry this batch later
+                    }
+                    else
+                    {
+                        std::println(stderr, "Error on {}: Dead client {}", ret, outputFDs[outputFDs.size() - 1].get_name());
+                        io_uring_queue_exit(&ring);
+                        exit(EOWNERDEAD);
+                    }
+                }
+                else if (ret == 0)
+                {
+                    // if (retries == 3)
+                    // {
+                    //     // EOF on input or pipe closed
+                    //     std::println("Stream ended.");
+                    //     io_uring_queue_exit(&ring);
+                    //     exit(ESTRPIPE);
+                    // }
+                    std::println("Timeout reached ({}s). No data yet, retrying submission...", timeout);
+                    sleep(timeout);
+                    retries++;
+
+                    // Clear the stale list and re-submit
+                    requests.clear();
+                    pending_completions = 0;
+                    perform_tee();
+                }
+                io_uring_cqe_seen(&ring, cqe);
+                perform_tee();
+            }
+
+
+
+io_uring_cqe *cqe;
+    unsigned head;
+    int count = 0;
+
+    io_uring_for_each_cqe(&ring, head, cqe) {
+        // Retrieve the flag we set earlier
+        OP_FLAGS type = static_cast<OP_FLAGS>(reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe)));
+        int res = cqe->res;
+
+        if (res < 0) {
+            if (res == -EAGAIN) {
+                // Handle retry logic here
+            } else {
+                std::println(stderr, "Op failed with: {}", res);
+            }
+        } else {
+            // Logic based on the flag
+            switch(type) {
+                case OP_FLAGS::src_src: 
+                    // Main file to pipe finished. Now trigger the TEEs.
+                    break;
+                case OP_FLAGS::splice_src:
+                    // Branch pipe to destination file finished.
+                    break;
+                // ... etc
+            }
+        }
+        count++;
+    }
+    io_uring_cq_advance(&ring, count);

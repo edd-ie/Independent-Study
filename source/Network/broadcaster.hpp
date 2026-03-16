@@ -30,8 +30,9 @@ namespace Network
 
         io_uring_prep_read(sqe,
                            raw_ptr->getFile(),
-                           raw_ptr->getData(),
-                           CHUNK, 0);
+                           raw_ptr->getSharedBuffer().data(),
+                           CHUNK,
+                           0);
 
         io_uring_sqe_set_data(sqe, raw_ptr);
         io_uring_submit(ring);
@@ -49,11 +50,11 @@ namespace Network
         Network::Request *raw_ptr = write_pipe.release();
 
         io_uring_prep_write(sqe, raw_ptr->getFile(),
-                            raw_ptr->getData(), raw_ptr->bytes(), 0);
+                            raw_ptr->getSharedBuffer().data(), raw_ptr->bytes(), 0);
         io_uring_sqe_set_data(sqe, raw_ptr);
     }
 
-    void broadcast(std::shared_ptr<Util::IO_Handle> inputFD, std::vector<std::shared_ptr<Util::IO_Handle>> &outputFDs)
+    void broadcast(std::shared_ptr<IO_Handle> inputFD, std::vector<std::shared_ptr<IO_Handle>> &outputFDs)
     {
         io_uring ring{};
         if (io_uring_queue_init(Q_DEPTH, &ring, 0) < 0)
@@ -103,7 +104,7 @@ namespace Network
 
                     outputFDs.erase(
                         std::remove_if(outputFDs.begin(), outputFDs.end(),
-                                       [&](const std::shared_ptr<Util::IO_Handle> &h)
+                                       [&](const std::shared_ptr<IO_Handle> &h)
                                        {
                                            return h->native_handle() == data->getFile();
                                        }),
@@ -123,11 +124,11 @@ namespace Network
             if (data->getType() == Network::OpType::Read)
             {
                 if (res == 0)
-                    break; // EOF
+                    break;
 
                 writes_pending = outputFDs.size();
                 auto share_data = data->getSharedBuffer();
-                for (std::shared_ptr<Util::IO_Handle> outFD : outputFDs)
+                for (std::shared_ptr<IO_Handle> outFD : outputFDs)
                 {
 
                     auto write_req = std::make_unique<Network::Request>(
