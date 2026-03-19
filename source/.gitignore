@@ -7,3 +7,4 @@ resource/test_data
 resource/test_input.txt
 test/*.txt
 .gitignore
+.vscode
