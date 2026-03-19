@@ -6,3 +6,4 @@ resource/4
 resource/test_data
 resource/test_input.txt
 test/*.txt
+.gitignore
