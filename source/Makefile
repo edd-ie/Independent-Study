@@ -19,7 +19,6 @@ TEST_FILES := $(wildcard resource/test_data/test_file_*.txt)
 
 CXX      := mpicxx
 FORMAT   := clang-format
-
 LIBS     := -luring
 
 
@@ -39,16 +38,16 @@ MODE ?= release
 
 
 # Base flags for all modes
-COMMON_FLAGS := -std=c++23 -I. -Wall -Wextra -Wpedantic
-
+COMMON_FLAGS := -std=c++23 -I. -Wall -Wextra -Wpedantic -O3 -fopenmp
+ 
 ifeq ($(MODE),debug)
     OUT_DIR   := $(DEBUG_DIR)
-    CXXFLAGS  := $(COMMON_FLAGS) -O0 -g -DDEBUG
-    LDFLAGS   :=
+    CXXFLAGS  := $(COMMON_FLAGS) -g -DDEBUG
+    LDFLAGS   := -fopenmp
     BUILD_MSG := "Building in DEBUG mode"
 else
     OUT_DIR   := $(RELEASE_DIR)
-    CXXFLAGS  := $(COMMON_FLAGS) -fopenmp -O3 -march=native
+    CXXFLAGS  := $(COMMON_FLAGS) -march=native
     LDFLAGS   := -fopenmp
     BUILD_MSG := "Building in RELEASE mode"
 endif
@@ -87,8 +86,8 @@ $(OUT_DIR)/%.o: %.cpp
 
 
 #files
-input = ./resource/data.txt
-
+INPUT ?= ./resource/data.txt
+THREADS ?= 4
 
 # ------------------------------------------------------------
 # Utility Targets
@@ -101,7 +100,8 @@ format:
 
 # Run MPI test
 n ?= 4
-test: $(OUT_DIR)/$(TARGET)	@echo -e "$(GREEN)[Test]$(RESET) Running with $(n) processes..."
+test: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(GREEN)[Test]$(RESET) Running with $(n) processes..."
 	@mpirun -np $(n) ./$(OUT_DIR)/$(TARGET)
 
 
@@ -110,50 +110,51 @@ test: $(OUT_DIR)/$(TARGET)	@echo -e "$(GREEN)[Test]$(RESET) Running with $(n) pr
 
 
 readv: $(OUT_DIR)/$(TARGET)
-	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 1 $(input) 1
+	@echo -e "\n$(GREEN)[Mode 1: Tree Broadcast (1 Copy, $(THREADS) Threads)]$(RESET)"
+	@OMP_NUM_THREADS=$(THREADS) ./$(OUT_DIR)/$(TARGET) 1 $(INPUT) 1
 
 readv2: $(OUT_DIR)/$(TARGET)
-	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 1 $(input) 2
+	@echo -e "\n$(GREEN)[Mode 1: Tree Broadcast (2 Copies, $(THREADS) Threads)]$(RESET)"
+	@OMP_NUM_THREADS=$(THREADS) ./$(OUT_DIR)/$(TARGET) 1 $(INPUT) 2
 
 readvAll: $(OUT_DIR)/$(TARGET)
-	@echo -e "\n$(GREEN)[Test run: (readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 1 $(input) 4
+	@echo -e "\n$(GREEN)[Mode 1: Tree Broadcast (4 Copies, $(THREADS) Threads)]$(RESET)"
+	@OMP_NUM_THREADS=$(THREADS) ./$(OUT_DIR)/$(TARGET) 1 $(INPUT) 4
+
 
 uring: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 2 $(input) 1
+	@./$(OUT_DIR)/$(TARGET) 2 $(INPUT) 1
 
 uring2: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 2 $(input) 2
-
+	@./$(OUT_DIR)/$(TARGET) 2 $(INPUT) 2
 
 uringAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "$(GREEN)[Test run: (IO_Uring readv & writev Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 2 $(input) 4
+	@./$(OUT_DIR)/$(TARGET) 2 $(INPUT) 4
 
 
 splice: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 3 $(input) 1
+	@./$(OUT_DIR)/$(TARGET) 3 $(INPUT) 1
 splice2: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 3 $(input) 2
+	@./$(OUT_DIR)/$(TARGET) 3 $(INPUT) 2
 spliceAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 3 $(input) 4
+	@./$(OUT_DIR)/$(TARGET) 3 $(INPUT) 4
+
 
 tee: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 4 $(input) 1
+	@./$(OUT_DIR)/$(TARGET) 4 $(INPUT) 1
 tee2: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 4 $(input) 2
+	@./$(OUT_DIR)/$(TARGET) 4 $(INPUT) 2
 teeAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
-	@./$(OUT_DIR)/$(TARGET) 4 $(input) 4
+	@./$(OUT_DIR)/$(TARGET) 4 $(INPUT) 4
 
 
 clean:

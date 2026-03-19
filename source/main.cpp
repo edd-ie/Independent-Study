@@ -5,13 +5,14 @@
 #include <string>
 #include <span>
 #include <csignal> // For SIGPIPE
-#include "Network/broadcastTee.hpp"
-#include "file_system/IO_Handle.hpp"
 #include <cerrno>
 #include <system_error>
 #include <filesystem>
-#include "file_system/Manage_Pipe.hpp"
 #include <fstream>
+#include "file_system/Manage_Pipe.hpp"
+#include "file_system/IO_Handle.hpp"
+#include "Network/broadcastTee.hpp"
+#include "IOuring/readv_broadcaster.hpp"
 
 int get_system_pipe_limit(int requested_size = 1024 * 1024)
 {
@@ -55,7 +56,12 @@ int main(int argc, char **argv)
     for (int i = 0; i < COPIES; i++)
     {
         std::string name = std::format("{}/output_{}.txt", dir, i);
-        int fd = open(name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        int fd;
+        if (MODE < 3)
+            fd = open(name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
+        else
+            fd = open(name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
         if (fd < 0)
         {
             std::println(stderr, "Warning: No reader on {}, error: {}", name, errno);
@@ -68,7 +74,11 @@ int main(int argc, char **argv)
 
     std::span<IO_Handle> dest_files(destination_fds);
 
-    if (MODE > 2)
+    if (MODE == 1)
+    {
+        perform_tree_broadcast(source_fd, dest_files);
+    }
+    else if (MODE > 2)
     {
         try
         {
