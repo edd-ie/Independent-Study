@@ -25,6 +25,20 @@ int get_system_pipe_limit(int requested_size = 1024 * 1024)
     return 65536;
 }
 
+inline void print_stats(std::string mode_name, size_t total_bytes, std::chrono::nanoseconds duration)
+{
+    double seconds = duration.count() / 1e9;
+    double mb = static_cast<double>(total_bytes) / (1024 * 1024);
+    double throughput = mb / seconds;
+
+    std::println("------------------------------------");
+    std::println("Result for {}:", mode_name);
+    std::println("  Time:       {:.4f} s", seconds);
+    std::println("  Total Data: {:.2f} MB", mb);
+    std::println("  Throughput: {:.2f} MB/s", throughput);
+    std::println("------------------------------------");
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 4)
@@ -76,7 +90,15 @@ int main(int argc, char **argv)
 
     if (MODE == 1)
     {
+        auto start = std::chrono::high_resolution_clock::now();
+
         perform_tree_broadcast(source_fd, dest_files);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+        size_t total_bytes = get_file_size(source_fd.native_handle()) * COPIES;
+
+        print_stats("Tree Broadcast (Mode 1)", total_bytes, duration);
     }
     else if (MODE > 2)
     {

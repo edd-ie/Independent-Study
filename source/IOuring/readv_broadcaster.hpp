@@ -99,8 +99,6 @@ ssize_t submit_read_write(IO_Handle &input, IO_Handle &output, off_t start_offse
     return static_cast<ssize_t>(total_processed);
 }
 
-#include <sys/uio.h> // for preadv/pwritev
-
 int perform_tree_broadcast(IO_Handle &root_input, std::span<IO_Handle> output_files)
 {
     int num_outputs = static_cast<int>(output_files.size());
@@ -119,7 +117,6 @@ int perform_tree_broadcast(IO_Handle &root_input, std::span<IO_Handle> output_fi
 
             if (receiver_id < total_nodes)
             {
-                // Map node IDs to output_files index (Node 0 is Root, Node 1 is output_files[0])
                 int dest_idx = receiver_id - 1;
 
                 if (sender_id == 0)

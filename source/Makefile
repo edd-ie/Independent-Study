@@ -86,8 +86,9 @@ $(OUT_DIR)/%.o: %.cpp
 
 
 #files
-INPUT ?= ./resource/data.txt
+INPUT ?= ./test/data.txt
 THREADS ?= 4
+COPIES ?= 4
 
 # ------------------------------------------------------------
 # Utility Targets
@@ -156,6 +157,28 @@ teeAll: $(OUT_DIR)/$(TARGET)
 	@echo -e "\n$(GREEN)[Test run: (IO_Uring tee & splice Performance)]$(RESET)"
 	@./$(OUT_DIR)/$(TARGET) 4 $(INPUT) 4
 
+
+# Run with: sudo make benchmark COPIES=4
+benchmark: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(YELLOW)--- Starting Performance Benchmark (N=$(COPIES)) ---$(RESET)"
+	@for mode in 1 2 3 4; do \
+		echo -e "\n$(BLUE)Testing Mode $$mode...$(RESET)"; \
+		sync; echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null; \
+		/usr/bin/time -v ./$(OUT_DIR)/$(TARGET) $$mode $(INPUT) $(COPIES) 2>&1 | grep -E "Elapsed|User|System|Maximum resident set size"; \
+	done
+
+# Run with: make benchmark-plot
+benchmark-plot: $(OUT_DIR)/$(TARGET)
+	@echo -e "$(YELLOW)--- Running Benchmarks and Generating Chart ---$(RESET)"
+	@# Clear caches (optional, requires sudo)
+	@sync; echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
+	@# Run the benchmark and save output to results.txt
+	@./$(OUT_DIR)/$(TARGET) 1 $(INPUT) $(COPIES) > results.txt
+	@./$(OUT_DIR)/$(TARGET) 2 $(INPUT) $(COPIES) >> results.txt
+	@./$(OUT_DIR)/$(TARGET) 3 $(INPUT) $(COPIES) >> results.txt
+	@./$(OUT_DIR)/$(TARGET) 4 $(INPUT) $(COPIES) >> results.txt
+	@# Run the python script
+	@python3 plot_results.py results.txt
 
 clean:
 	@echo -e "$(RED)[Clean]$(RESET) Removing $(BUILD_DIR)"
