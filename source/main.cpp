@@ -1,8 +1,4 @@
 #include <unistd.h> // for optind
-#include <fcntl.h>
-#include <print>
-#include <vector>
-#include <string>
 #include <span>
 #include <csignal> // For SIGPIPE
 #include <cerrno>
@@ -13,6 +9,8 @@
 #include "file_system/IO_Handle.hpp"
 #include "Network/broadcastTee.hpp"
 #include "IOuring/readv_broadcaster.hpp"
+#include "IOuring/uring_vec_broadcaster.hpp"
+#include "Network/broadcastSplice.hpp"
 
 int get_system_pipe_limit(int requested_size = 1024 * 1024)
 {
@@ -92,13 +90,23 @@ int main(int argc, char **argv)
     {
         auto start = std::chrono::high_resolution_clock::now();
 
-        perform_tree_broadcast(source_fd, dest_files);
+        size_t total_bytes = perform_readv_broadcast(source_fd, dest_files);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-        size_t total_bytes = get_file_size(source_fd.native_handle()) * COPIES;
 
-        print_stats("Tree Broadcast (Mode 1)", total_bytes, duration);
+        print_stats("Readv|Writev tree Broadcast (Mode 1)", total_bytes, duration);
+    }
+    else if (MODE == 2)
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        size_t total_bytes = perform_uring_broadcast(source_fd, dest_files);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+        print_stats("IO_Uring Readv|Writev Broadcast (Mode 2)", total_bytes, duration);
     }
     else if (MODE > 2)
     {
@@ -113,7 +121,7 @@ int main(int argc, char **argv)
             auto &in_pipe = pipe_storage.back();
 
             int fd;
-            if ((fd = open(in_pipe.c_str(), O_RDWR | O_NONBLOCK)) < 0)
+            if ((fd = open(in_pipe.c_str(), O_RDWR)) < 0)
             {
                 std::println(stderr, "Error opening file: {}", in_pipe.c_str());
                 return EBADFD;
@@ -137,7 +145,7 @@ int main(int argc, char **argv)
                 pipe_storage.emplace_back(dir, i + 1);
                 auto &pipe_out = pipe_storage.back();
 
-                if ((fd = open(pipe_out.c_str(), O_RDWR | O_NONBLOCK)) < 0)
+                if ((fd = open(pipe_out.c_str(), O_RDWR)) < 0)
                 {
                     std::println(stderr, "Error opening file: {}", pipe_out.c_str());
                     return EBADFD;
@@ -158,16 +166,31 @@ int main(int argc, char **argv)
             std::span<IO_Handle> dest_write_pipe{output_pipes_w};
             std::span<IO_Handle> dest_read_pipe{output_pipes_r};
 
-            if (MODE == 2)
+            if (MODE == 3)
             {
+                auto start = std::chrono::high_resolution_clock::now();
+
+                size_t total_bytes = perform_splice_broadcast(source_fd, dest_files, dest_write_pipe, dest_read_pipe);
+
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+                print_stats("IO_Uring Splice Broadcast (Mode 3)", total_bytes, duration);
             }
             else
             {
-                Network::broadcastTee(
+                auto start = std::chrono::high_resolution_clock::now();
+
+                size_t total_bytes = Network::perform_tee_broadcast(
                     source_fd,
                     input_w, input_r,
                     dest_files,
                     dest_write_pipe, dest_read_pipe);
+
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+                print_stats("IO_Uring Splice Broadcast (Mode 3)", total_bytes, duration);
             }
         }
         catch (std::system_error &e)

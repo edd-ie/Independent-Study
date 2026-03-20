@@ -2,6 +2,25 @@
 
 #include <type_traits>
 #include <string>
+#include <unistd.h>
+#include <utility>
+#include <sys/stat.h>
+#include <linux/fs.h>
+#include <sys/uio.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+enum class OpType
+{
+    Read,
+    Write,
+    Splice,
+    Tee,
+    SRC_SPLICE_PIPE,
+    PIPE_TEE_PIPE,
+    PIPE_SPLICE_PIPE,
+    PIPE_SPLICE_DEST
+};
 
 class IO_Handle
 {
@@ -28,6 +47,7 @@ public:
 
     void set_name(std::string &file) { file_name = file; }
     std::string get_name() { return file_name; }
+    static off_t get_file_size(native_handle_type fd);
 
 private:
     static constexpr native_handle_type unassigned_fd{-1};

@@ -1,6 +1,4 @@
 #include "IO_Handle.hpp"
-#include <unistd.h>
-#include <utility>
 
 IO_Handle::IO_Handle(IO_Handle &&other) noexcept : fd{std::exchange(other.fd, IO_Handle::unassigned_fd)}, file_name{other.file_name}
 {
@@ -44,4 +42,27 @@ IO_Handle::native_handle_type IO_Handle::native_handle() noexcept
 void IO_Handle::close()
 {
     ::close(fd);
+}
+
+off_t IO_Handle::get_file_size(native_handle_type fd)
+{
+    struct stat st;
+    if (fstat(fd, &st) < 0)
+    {
+        perror("fstat");
+        return -1;
+    }
+    if (S_ISBLK(st.st_mode))
+    {
+        unsigned long long bytes;
+        if (ioctl(fd, BLKGETSIZE64, &bytes) != 0)
+        {
+            perror("ioctl");
+            return -1;
+        }
+        return bytes;
+    }
+    else if (S_ISREG(st.st_mode))
+        return st.st_size;
+    return -1;
 }

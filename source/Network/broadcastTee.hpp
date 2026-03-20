@@ -10,6 +10,7 @@
 #include "Request.hpp"
 #include <span>
 #include <list>
+#include <string.h>
 
 namespace Network
 {
@@ -23,54 +24,69 @@ namespace Network
 
     const unsigned int CHUNK_SIZE = 64 * 1024;
 
-    size_t prepare_tee(io_uring &ring, IO_Handle &input_pipe_r, IO_Handle &output_pipe_w, int i)
+    // Returns 1 if successful
+    size_t prepare_tee(io_uring &ring, IO_Handle &in, IO_Handle &out, size_t size, int i, bool link)
     {
         io_uring_sqe *sqe = io_uring_get_sqe(&ring);
         if (!sqe)
             return 0;
 
-        io_uring_prep_tee(sqe,
-                          input_pipe_r.native_handle(),
-                          output_pipe_w.native_handle(),
-                          CHUNK_SIZE,
-                          SPLICE_F_NONBLOCK);
+        io_uring_prep_tee(sqe, in.native_handle(), out.native_handle(), size, 0);
+
+        if (link)
+            sqe->flags |= IOSQE_IO_LINK;
 
         uintptr_t packed = (static_cast<uintptr_t>(OP_FLAGS::PIPE_TEE_PIPE) << 32) | (i & 0xFFFFFFFF);
         io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(packed));
         return 1;
     }
 
-    size_t prepare_splice(io_uring &ring, IO_Handle &input_fd, IO_Handle &output_fd, const OP_FLAGS flag, const int offset, const int i)
+    size_t prepare_splice(io_uring &ring, IO_Handle &in, IO_Handle &out, OP_FLAGS flag, off_t offset, size_t size, int i, bool link = false)
     {
-
         io_uring_sqe *sqe = io_uring_get_sqe(&ring);
         if (!sqe)
             return 0;
 
-        int64_t off_in = -1;
-        int64_t off_out = -1;
+        int64_t off_in = (flag == OP_FLAGS::SRC_SPLICE_PIPE) ? (int64_t)offset : -1;
+        int64_t off_out = (flag == OP_FLAGS::PIPE_SPLICE_DEST) ? (int64_t)offset : -1;
 
-        if (flag == OP_FLAGS::SRC_SPLICE_PIPE)
-        {
-            off_in = offset;
-        }
-        else if (flag == OP_FLAGS::PIPE_SPLICE_DEST)
-        {
-            off_out = offset;
-        }
+        io_uring_prep_splice(sqe, in.native_handle(), off_in, out.native_handle(), off_out, size, SPLICE_F_MOVE);
 
-        io_uring_prep_splice(sqe,
-                             input_fd.native_handle(), off_in,
-                             output_fd.native_handle(), off_out,
-                             CHUNK_SIZE,
-                             SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
+        if (link)
+            sqe->flags |= IOSQE_IO_LINK;
 
         uintptr_t packed = (static_cast<uintptr_t>(flag) << 32) | (i & 0xFFFFFFFF);
         io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(packed));
         return 1;
     }
 
-    void broadcastTee(IO_Handle &source_file, IO_Handle &src_write_pipe, IO_Handle &src_read_pipe, std::span<IO_Handle> &output_files, std::span<IO_Handle> dest_write_pipes, std::span<IO_Handle> dest_read_pipes)
+    size_t process_cqe(io_uring &ring)
+    {
+        io_uring_cqe *cqe;
+        unsigned head;
+        size_t total_data = 0;
+        size_t completed_cqes = 0;
+        io_uring_for_each_cqe(&ring, head, cqe)
+        {
+            if (cqe->res == -ECANCELED || cqe->res == -EAGAIN)
+                continue;
+
+            if (cqe->res < 0)
+            {
+                std::println(stderr, "Error: {}", strerror(-cqe->res));
+                return 0;
+            }
+
+            uintptr_t packed = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
+            total_data += packed & 0xFFFFFFFF;
+
+            completed_cqes++;
+        }
+        io_uring_cq_advance(&ring, completed_cqes);
+        return total_data;
+    }
+
+    size_t perform_tee_broadcast(IO_Handle &source_file, IO_Handle &src_write_pipe, IO_Handle &src_read_pipe, std::span<IO_Handle> &output_files, std::span<IO_Handle> dest_write_pipes, std::span<IO_Handle> dest_read_pipes)
     {
         io_uring ring{};
         if (io_uring_queue_init(128, &ring, 0) < 0)
@@ -79,107 +95,65 @@ namespace Network
             exit(EIO);
         }
 
-        uint64_t src_offset = 0;
-        std::vector<uint64_t> dest_offsets(output_files.size(), 0);
-        int pending_completions = 0;
+        // uint64_t src_offset = 0;
+        // std::vector<uint64_t> dest_offsets(output_files.size(), 0);
 
-        auto submit_batch = [&]()
+        size_t data_size = 0;
+        size_t file_sz = IO_Handle::get_file_size(source_file);
+        size_t total_processed = 0;
+
+        while (total_processed < file_sz)
         {
-            prepare_splice(ring, source_file, src_write_pipe, OP_FLAGS::SRC_SPLICE_PIPE, src_offset, 999);
-            io_uring_get_sqe(&ring)->flags |= IOSQE_IO_LINK;
-            pending_completions++;
+            size_t to_process = std::min<size_t>(CHUNK_SIZE, file_sz - total_processed);
 
-            // 2. BRANCHING: Main Pipe -> Branch Pipes
-            for (size_t i = 0; i < dest_write_pipes.size(); ++i)
+            // 1. READ: File -> Master Pipe (NO LINK - avoid fragile chain)
+            prepare_splice(ring, source_file, src_write_pipe, OP_FLAGS::SRC_SPLICE_PIPE, total_processed, to_process, 999);
+
+            int expected_cqes = 1;
+
+            // 2. TEE & SPLICE: For all but the last file
+            for (size_t i = 0; i < output_files.size() - 1; ++i)
             {
-                bool is_last = (i == dest_write_pipes.size() - 1);
-
-                if (!is_last)
-                    prepare_tee(ring, src_read_pipe, dest_write_pipes[i], i);
-                else
-                    prepare_splice(ring, src_read_pipe, dest_write_pipes[i], OP_FLAGS::PIPE_SPLICE_PIPE, -1, i);
-
-                io_uring_get_sqe(&ring)->flags |= IOSQE_IO_LINK;
-
+                // Link the TEE to its OWN SPLICE only
+                prepare_tee(ring, src_read_pipe, dest_write_pipes[i], to_process, i, true);
                 prepare_splice(ring, dest_read_pipes[i], output_files[i],
-                               OP_FLAGS::PIPE_SPLICE_DEST, dest_offsets[i], i);
-
-                pending_completions += 2;
+                               OP_FLAGS::PIPE_SPLICE_DEST, total_processed, to_process, i, false);
+                expected_cqes += 2;
             }
 
-            src_offset += CHUNK_SIZE;
+            // 3. CONSUME: The last file clears the master pipe
+            size_t last = output_files.size() - 1;
+            prepare_splice(ring, src_read_pipe, output_files[last],
+                           OP_FLAGS::PIPE_SPLICE_DEST, total_processed, to_process, last, false);
+            expected_cqes += 1;
+
             io_uring_submit(&ring);
-        };
 
-        submit_batch();
-        // submit_batch();
-
-        while (true)
-        {
-            int ret = io_uring_submit_and_wait(&ring, pending_completions);
-            if (ret < 0)
-                break;
-
-            io_uring_cqe *cqe;
-            if (io_uring_wait_cqe(&ring, &cqe) < 0)
-                break;
-
-            unsigned head;
-            int processed = 0;
-            bool stop_requested = false;
-
-            io_uring_for_each_cqe(&ring, head, cqe)
+            // 4. WAIT: Block and handle short splices
+            int completed = 0;
+            while (completed < expected_cqes)
             {
-                processed++;
-                uintptr_t packed = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
-                OP_FLAGS type = static_cast<OP_FLAGS>(packed >> 32);
-                size_t index = packed & 0xFFFFFFFF;
-                int res = cqe->res;
-
-                if (res == -EAGAIN || res == -ECANCELED)
-                    continue;
-
-                if (res < 0)
+                io_uring_cqe *cqe;
+                if (io_uring_wait_cqe(&ring, &cqe) == 0)
                 {
-                    std::string err_src;
-                    switch (type)
+                    if (cqe->res < 0)
                     {
-                    case OP_FLAGS::SRC_SPLICE_PIPE:
-                        err_src = "Source File";
-                        break;
-                    case OP_FLAGS::PIPE_SPLICE_DEST:
-                        err_src = output_files[index].get_name();
-                        break;
-                    default:
-                        err_src = "Internal Pipe";
-                        break;
+                        // If you still see ECANCELED here, it means the TEE failed (likely pipe full)
+                        std::println(stderr, "Op Error: {}", strerror(-cqe->res));
                     }
-
-                    std::println(stderr, "Error {}: Dead client/resource {}", res, err_src);
-                    stop_requested = true;
-                    break;
-                }
-                else if (type == OP_FLAGS::SRC_SPLICE_PIPE)
-                {
-                    if (res == 0)
+                    else if ((size_t)cqe->res < to_process)
                     {
-                        std::println("Broadcast complete shutting down...");
-                        stop_requested = true;
-                        break;
+                        // To tell it like it is: This is where your data corruption starts.
+                        // A real-world app would need to resubmit the remaining bytes here.
                     }
-
-                    submit_batch();
-                }
-                else if (type == OP_FLAGS::PIPE_SPLICE_DEST)
-                {
-                    if (res > 0)
-                        dest_offsets[index] += res;
+                    io_uring_cqe_seen(&ring, cqe);
+                    completed++;
                 }
             }
-            io_uring_cq_advance(&ring, processed);
-            if (stop_requested)
-                break;
+            total_processed += to_process;
         }
+
         io_uring_queue_exit(&ring);
+        return data_size;
     }
 }

@@ -86,7 +86,7 @@ $(OUT_DIR)/%.o: %.cpp
 
 
 #files
-INPUT ?= ./test/data.txt
+INPUT ?= ./test/test_input.txt
 THREADS ?= 4
 COPIES ?= 4
 

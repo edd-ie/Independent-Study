@@ -5,11 +5,6 @@
 #pragma once
 
 #include <stdio.h>
-#include <sys/uio.h>
-#include <sys/stat.h>
-#include <linux/fs.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <vector>
 #include <chrono>
@@ -23,35 +18,9 @@
 
 const size_t CHUNK_SIZE = 4096;
 
-off_t get_file_size(int fd)
-{
-    struct stat st;
-
-    if (fstat(fd, &st) < 0)
-    {
-        perror("fstat");
-        return -1;
-    }
-
-    if (S_ISBLK(st.st_mode))
-    {
-        unsigned long long bytes;
-
-        if (ioctl(fd, BLKGETSIZE64, &bytes) != 0)
-        {
-            perror("ioctl");
-            return -1;
-        }
-        return bytes;
-    }
-    else if (S_ISREG(st.st_mode))
-        return st.st_size;
-    return -1;
-}
-
 ssize_t submit_read_write(IO_Handle &input, IO_Handle &output, off_t start_offset)
 {
-    const off_t file_sz = get_file_size(input.native_handle());
+    const off_t file_sz = IO_Handle::get_file_size(input.native_handle());
     if (file_sz <= 0)
         return file_sz;
 
@@ -99,11 +68,13 @@ ssize_t submit_read_write(IO_Handle &input, IO_Handle &output, off_t start_offse
     return static_cast<ssize_t>(total_processed);
 }
 
-int perform_tree_broadcast(IO_Handle &root_input, std::span<IO_Handle> output_files)
+ssize_t perform_readv_broadcast(IO_Handle &root_input, std::span<IO_Handle> output_files)
 {
     int num_outputs = static_cast<int>(output_files.size());
     int total_nodes = num_outputs + 1;
     int total_rounds = std::ceil(std::log2(total_nodes));
+
+    size_t data_transfer = 0;
 
     for (int round = 0; round < total_rounds; ++round)
     {
@@ -121,15 +92,15 @@ int perform_tree_broadcast(IO_Handle &root_input, std::span<IO_Handle> output_fi
 
                 if (sender_id == 0)
                 {
-                    submit_read_write(root_input, output_files[dest_idx], 0);
+                    data_transfer += submit_read_write(root_input, output_files[dest_idx], 0);
                 }
                 else
                 {
                     int src_idx = sender_id - 1;
-                    submit_read_write(output_files[src_idx], output_files[dest_idx], 0);
+                    data_transfer += submit_read_write(output_files[src_idx], output_files[dest_idx], 0);
                 }
             }
         }
     }
-    return 0;
+    return data_transfer;
 }

@@ -8,119 +8,95 @@
 #include <errno.h>
 #include <sys/uio.h>
 #include "Request.hpp"
+#include "../file_system/IO_Handle.hpp"
+#include <cstring>
 
-namespace Network
+const size_t SPLICE_CHUNK_SIZE = 512 * 1024;
+
+size_t prepare_splice(io_uring &ring, IO_Handle &input, IO_Handle &output, IO_Handle &pipe_r, IO_Handle &pipe_w)
 {
-    const int SPLICE_Q_DEPTH = 64;
-    const int SPLICE_CHUNK = 4096;
+    const off_t file_sz = IO_Handle::get_file_size(input.native_handle());
+    off_t total_processed = 0;
+    size_t sqe_count = 0;
+    io_uring_sqe *sqe;
+    uintptr_t packed;
 
-    void submit_splice(io_uring *ring, std::shared_ptr<IO_Handle> inputFD, std::unique_ptr<Network::Request> request)
+    while (total_processed < file_sz)
     {
-        io_uring_sqe *sqe = io_uring_get_sqe(ring);
-        if (!sqe)
-        {
-            std::println(stderr, "Error getting sqe");
-            exit(1);
-        }
+        size_t to_splice = std::min<size_t>(SPLICE_CHUNK_SIZE, file_sz - total_processed);
 
-        Network::Request *raw_ptr = request.release();
-        io_uring_prep_splice(sqe, inputFD->native_handle(), -1, raw_ptr->getFile(), -1, raw_ptr->bytes(), SPLICE_F_MOVE);
-        io_uring_sqe_set_data(sqe, raw_ptr);
+        sqe = io_uring_get_sqe(&ring);
+
+        io_uring_prep_splice(sqe, pipe_r.native_handle(), -1,
+                             output.native_handle(), total_processed,
+                             to_splice, SPLICE_F_MOVE);
+
+        packed = (static_cast<uintptr_t>(output.native_handle()) << 32) | (to_splice & 0xFFFFFFFF);
+        io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(packed));
+
+        sqe = io_uring_get_sqe(&ring);
+
+        io_uring_prep_splice(sqe, input.native_handle(), total_processed,
+                             pipe_w.native_handle(), -1,
+                             to_splice, SPLICE_F_MOVE);
+
+        packed = (static_cast<uintptr_t>(output.native_handle()) << 32) | (0 & 0xFFFFFFFF);
+        io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(packed));
+
+        // // sqe->flags |= IOSQE_IO_LINK;
+
+        // std::println("Read before write loop proc: {} file: {} to_splice: {}", total_processed, file_sz, to_splice);
+
+        total_processed += to_splice;
+        sqe_count += 2;
+    }
+    return sqe_count;
+}
+
+size_t perform_splice_broadcast(IO_Handle &source_file, std::span<IO_Handle> output_files,
+                                std::span<IO_Handle> dest_write_pipes, std::span<IO_Handle> dest_read_pipes)
+{
+    io_uring ring{};
+    if (io_uring_queue_init(512, &ring, 0) < 0)
+    {
+        std::println(stderr, "Failure to init queue!");
+        return 0;
     }
 
-    void broadcastSplice(std::shared_ptr<IO_Handle> inputFD, std::vector<std::shared_ptr<IO_Handle>> &outputFDs)
+    size_t expected_cqes = 0;
+    for (size_t i = 0; i < output_files.size(); i++)
     {
-        io_uring ring{};
-        if (io_uring_queue_init(SPLICE_Q_DEPTH, &ring, 0) < 0)
-        {
-            std::println(stderr, "Failure to init queue!");
-            exit(1);
-        }
-
-        int splice_pending = 0;
-
-        auto start_splice = [&]()
-        {
-            splice_pending = outputFDs.size();
-            auto buffer = std::make_shared<std::vector<uint8_t>>(SPLICE_CHUNK);
-            for (std::shared_ptr<IO_Handle> outFD : outputFDs)
-            {
-
-                auto req = std::make_unique<Network::Request>(
-                    Network::OpType::Splice,
-                    buffer,
-                    outFD,
-                    SPLICE_CHUNK);
-
-                submit_splice(&ring, inputFD, std::move(req));
-                if (io_uring_submit(&ring) < 0)
-                {
-                    std::println(stderr, "submit for read failed");
-                }
-            }
-        };
-
-        start_splice();
-
-        while (true)
-        {
-            io_uring_cqe *cqe;
-
-            if (io_uring_wait_cqe(&ring, &cqe) < 0)
-            {
-                std::println(stderr, "wait_cqe failed");
-                break;
-            }
-
-            std::unique_ptr<Network::Request> data(static_cast<Network::Request *>(io_uring_cqe_get_data(cqe)));
-            int res = cqe->res;
-            io_uring_cqe_seen(&ring, cqe);
-
-            if (res < 0)
-            {
-                if (res == -EAGAIN) // pipe is currently empty.
-                {
-                    start_splice();
-                    continue;
-                }
-
-                if (data->getType() == Network::OpType::Splice)
-                {
-                    std::println(stderr, "Removing dead client (FD: {}), Error: {}", data->getFile(), res);
-
-                    outputFDs.erase(
-                        std::remove_if(outputFDs.begin(), outputFDs.end(),
-                                       [&](const std::shared_ptr<IO_Handle> &h)
-                                       {
-                                           return h->native_handle() == data->getFile();
-                                       }),
-                        outputFDs.end());
-
-                    if (outputFDs.empty())
-                    {
-                        break;
-                    }
-
-                    splice_pending--;
-                    if (splice_pending == 0 && !outputFDs.empty())
-                    {
-                        start_splice();
-                    }
-                    continue;
-                }
-                std::println(stderr, "CQE Error: {}", res);
-                break;
-            }
-
-            if (res == 0)
-                break;
-
-            splice_pending--;
-            if (splice_pending == 0)
-            {
-                start_splice();
-            }
-        }
-        io_uring_queue_exit(&ring);
+        expected_cqes += prepare_splice(ring, source_file, output_files[i],
+                                        dest_read_pipes[i], dest_write_pipes[i]);
     }
+
+    io_uring_submit(&ring);
+
+    int ret = io_uring_submit_and_wait(&ring, expected_cqes);
+    if (ret < 0 || ret == -errno)
+        return 0;
+
+    io_uring_cqe *cqe;
+    unsigned head;
+    size_t total_data = 0;
+    size_t completed_cqes = 0;
+    io_uring_for_each_cqe(&ring, head, cqe)
+    {
+        if (cqe->res == -ECANCELED || cqe->res == -EAGAIN)
+            continue;
+
+        if (cqe->res < 0)
+        {
+            std::println(stderr, "Splice Error: {}", strerror(-cqe->res));
+        }
+
+        uintptr_t packed = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
+        total_data += packed & 0xFFFFFFFF;
+
+        completed_cqes++;
+    }
+    io_uring_cq_advance(&ring, completed_cqes);
+
+    io_uring_queue_exit(&ring);
+    return total_data;
 }
