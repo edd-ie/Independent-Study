@@ -37,6 +37,11 @@ inline void print_stats(std::string mode_name, size_t total_bytes, std::chrono::
     std::println("------------------------------------");
 }
 
+#include <filesystem>
+#include <iostream>
+
+namespace fs = std::filesystem;
+
 int main(int argc, char **argv)
 {
     if (argc < 4)
@@ -54,12 +59,15 @@ int main(int argc, char **argv)
         return EBADFD;
     }
 
+    fs::path p(argv[2]);
+    std::string ext = p.extension().string();
+
     const int MODE = atoi(argv[1]);
     const int COPIES = atoi(argv[3]);
 
     std::string dir = std::format("./resource/{}/{}", MODE, (COPIES == 1) ? "Single" : (COPIES == 2) ? "Dual"
                                                                                                      : "Multi");
-    std::filesystem::create_directories(std::format("{}", dir));
+    fs::create_directories(std::format("{}", dir));
 
     IO_Handle source_fd(source);
     std::vector<IO_Handle> destination_fds;
@@ -67,7 +75,7 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < COPIES; i++)
     {
-        std::string name = std::format("{}/output_{}.txt", dir, i);
+        std::string name = std::format("{}/output_{}{}", dir, i, ext);
         int fd;
         if (MODE < 3)
             fd = open(name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
@@ -112,7 +120,8 @@ int main(int argc, char **argv)
     {
         try
         {
-            int max_allowed = get_system_pipe_limit();
+            // Set pipe capacity to 1MB or the system max
+            // int max_pipe = get_system_pipe_limit(1024 * 1024);
 
             std::vector<ManagedPipe> pipe_storage;
             pipe_storage.reserve(COPIES + 1);
@@ -128,9 +137,10 @@ int main(int argc, char **argv)
             }
 
             IO_Handle input_w(fd);
-            IO_Handle input_r(dup(fd));
+            fcntl(input_w.native_handle(), F_SETPIPE_SZ, 1024 * 1024);
 
-            fcntl(fd, F_SETPIPE_SZ, max_allowed);
+            IO_Handle input_r(dup(fd));
+            fcntl(input_r.native_handle(), F_SETPIPE_SZ, 1024 * 1024);
 
             input_w.set_name(in_pipe.name());
             input_r.set_name(in_pipe.name());
@@ -152,9 +162,10 @@ int main(int argc, char **argv)
                 }
 
                 IO_Handle file_w(fd);
-                IO_Handle file_r(dup(fd));
+                fcntl(file_w.native_handle(), F_SETPIPE_SZ, 1024 * 1024);
 
-                fcntl(fd, F_SETPIPE_SZ, max_allowed);
+                IO_Handle file_r(dup(fd));
+                fcntl(file_r.native_handle(), F_SETPIPE_SZ, 1024 * 1024);
 
                 file_w.set_name(pipe_out.name());
                 file_r.set_name(pipe_out.name());
@@ -179,6 +190,7 @@ int main(int argc, char **argv)
             }
             else
             {
+
                 auto start = std::chrono::high_resolution_clock::now();
 
                 size_t total_bytes = Network::perform_tee_broadcast(

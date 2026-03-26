@@ -1,17 +1,12 @@
 #pragma once
 
-#include <sys/stat.h>
-#include <print>
 #include <liburing.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/uio.h>
-#include "Request.hpp"
+#include <algorithm>
+#include <span>
+#include <iostream>
 #include "../file_system/IO_Handle.hpp"
-#include <cstring>
 
-const size_t SPLICE_CHUNK_SIZE = 512 * 1024;
+const size_t SPLICE_CHUNK_SIZE = 512 * 1024; // 512KB
 
 size_t prepare_splice(io_uring &ring, IO_Handle &input, IO_Handle &output, IO_Handle &pipe_r, IO_Handle &pipe_w)
 {
@@ -23,7 +18,7 @@ size_t prepare_splice(io_uring &ring, IO_Handle &input, IO_Handle &output, IO_Ha
 
     while (total_processed < file_sz)
     {
-        size_t to_splice = std::min<size_t>(SPLICE_CHUNK_SIZE, file_sz - total_processed);
+        size_t to_splice = std::min<size_t>(SPLICE_CHUNK_SIZE, static_cast<size_t>(file_sz - total_processed));
 
         sqe = io_uring_get_sqe(&ring);
 
@@ -43,10 +38,6 @@ size_t prepare_splice(io_uring &ring, IO_Handle &input, IO_Handle &output, IO_Ha
         packed = (static_cast<uintptr_t>(output.native_handle()) << 32) | (0 & 0xFFFFFFFF);
         io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(packed));
 
-        // // sqe->flags |= IOSQE_IO_LINK;
-
-        // std::println("Read before write loop proc: {} file: {} to_splice: {}", total_processed, file_sz, to_splice);
-
         total_processed += to_splice;
         sqe_count += 2;
     }
@@ -57,46 +48,73 @@ size_t perform_splice_broadcast(IO_Handle &source_file, std::span<IO_Handle> out
                                 std::span<IO_Handle> dest_write_pipes, std::span<IO_Handle> dest_read_pipes)
 {
     io_uring ring{};
-    if (io_uring_queue_init(512, &ring, 0) < 0)
-    {
-        std::println(stderr, "Failure to init queue!");
+    if (io_uring_queue_init(1024, &ring, 0) < 0)
         return 0;
-    }
 
+    const off_t file_sz = IO_Handle::get_file_size(source_file.native_handle());
+    off_t total_processed = 0;
+    size_t total_data_verified = 0;
     size_t expected_cqes = 0;
-    for (size_t i = 0; i < output_files.size(); i++)
+
+    while (total_processed < file_sz)
     {
-        expected_cqes += prepare_splice(ring, source_file, output_files[i],
-                                        dest_read_pipes[i], dest_write_pipes[i]);
-    }
+        size_t to_splice = std::min<size_t>(SPLICE_CHUNK_SIZE, static_cast<size_t>(file_sz - total_processed));
 
-    io_uring_submit(&ring);
-
-    int ret = io_uring_submit_and_wait(&ring, expected_cqes);
-    if (ret < 0 || ret == -errno)
-        return 0;
-
-    io_uring_cqe *cqe;
-    unsigned head;
-    size_t total_data = 0;
-    size_t completed_cqes = 0;
-    io_uring_for_each_cqe(&ring, head, cqe)
-    {
-        if (cqe->res == -ECANCELED || cqe->res == -EAGAIN)
-            continue;
-
-        if (cqe->res < 0)
+        for (size_t i = 0; i < output_files.size(); i++)
         {
-            std::println(stderr, "Splice Error: {}", strerror(-cqe->res));
+            // 1. Splice from Source File to Pipe
+            io_uring_sqe *sqe = io_uring_get_sqe(&ring);
+            if (!sqe)
+                break;
+
+            io_uring_prep_splice(sqe, source_file.native_handle(), total_processed,
+                                 dest_write_pipes[i].native_handle(), -1,
+                                 to_splice, SPLICE_F_MOVE | SPLICE_F_MORE);
+            sqe->flags |= IOSQE_IO_LINK;
+            io_uring_sqe_set_data(sqe, nullptr);
+
+            // Splice from Pipe to Destination File
+            sqe = io_uring_get_sqe(&ring);
+            if (!sqe)
+                break;
+
+            io_uring_prep_splice(sqe, dest_read_pipes[i].native_handle(), -1,
+                                 output_files[i].native_handle(), total_processed,
+                                 to_splice, SPLICE_F_MOVE);
+
+            uintptr_t packed = (static_cast<uintptr_t>(to_splice) & 0xFFFFFFFF);
+            io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(packed));
+
+            expected_cqes += 2;
         }
 
-        uintptr_t packed = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
-        total_data += packed & 0xFFFFFFFF;
+        total_processed += to_splice;
 
-        completed_cqes++;
+        // PERIODIC SUBMISSION & REAPING
+        // Prevents SQE/CQE overflow for 512MB+ files
+        if (expected_cqes >= 512 || total_processed >= file_sz)
+        {
+            io_uring_submit(&ring);
+
+            while (expected_cqes > 0)
+            {
+                io_uring_cqe *cqe;
+                int ret = io_uring_wait_cqe_nr(&ring, &cqe, 1);
+                if (ret < 0)
+                    break;
+
+                if (io_uring_cqe_get_data(cqe))
+                {
+                    if (cqe->res > 0)
+                        total_data_verified += cqe->res;
+                }
+
+                io_uring_cqe_seen(&ring, cqe);
+                expected_cqes--;
+            }
+        }
     }
-    io_uring_cq_advance(&ring, completed_cqes);
 
     io_uring_queue_exit(&ring);
-    return total_data;
+    return total_data_verified;
 }
