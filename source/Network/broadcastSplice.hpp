@@ -6,7 +6,7 @@
 #include <iostream>
 #include "../file_system/IO_Handle.hpp"
 
-const size_t SPLICE_CHUNK_SIZE = 512 * 1024; // 512KB
+const size_t SPLICE_CHUNK_SIZE = 256 * 1024; // 512KB
 
 size_t prepare_splice(io_uring &ring, IO_Handle &input, IO_Handle &output, IO_Handle &pipe_r, IO_Handle &pipe_w)
 {
@@ -48,7 +48,7 @@ size_t perform_splice_broadcast(IO_Handle &source_file, std::span<IO_Handle> out
                                 std::span<IO_Handle> dest_write_pipes, std::span<IO_Handle> dest_read_pipes)
 {
     io_uring ring{};
-    if (io_uring_queue_init(1024, &ring, 0) < 0)
+    if (io_uring_queue_init(512, &ring, 0) < 0)
         return 0;
 
     const off_t file_sz = IO_Handle::get_file_size(source_file.native_handle());

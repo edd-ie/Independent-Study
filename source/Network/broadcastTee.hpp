@@ -22,7 +22,7 @@ namespace Network
         PIPE_SPLICE_DEST
     };
 
-    const unsigned int CHUNK_SIZE = 512 * 1024;
+    const unsigned int CHUNK_SIZE = 256 * 1024;
 
     uintptr_t pack_data(IO_Handle::native_handle_type fd, off_t offset, size_t size)
     {
@@ -130,138 +130,132 @@ namespace Network
         size_t to_process = 0, total_processed = 0, total_data_moved = 0;
         uint submissions;
 
-        const int BATCH_SIZE = 8; // Number of chunks to keep in the pipeline
-        int in_flight = 0;
-
-        while (total_processed < file_sz || in_flight > 0)
+        while (total_processed < file_sz)
         {
+            to_process = std::min<size_t>(static_cast<size_t>(CHUNK_SIZE), file_sz - total_processed);
+            submissions = 0;
 
-            while (in_flight < BATCH_SIZE && total_processed < file_sz)
+            io_uring_sqe *sqe = io_uring_get_sqe(&ring);
+            io_uring_prep_splice(sqe, source_file.native_handle(), total_processed,
+                                 src_write_pipe.native_handle(), -1,
+                                 to_process, SPLICE_F_MORE);
+            sqe->flags |= IOSQE_IO_LINK;
+            sqe->user_data = 0;
+            submissions++;
+
+            //  BROADCAST TO N-1 FILES
+            for (size_t i = 0; i < output_files.size() - 1; i++)
             {
-                size_t to_process = std::min<size_t>(CHUNK_SIZE, file_sz - total_processed);
-
-                io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-                io_uring_prep_splice(sqe, source_file.native_handle(), total_processed,
-                                     src_write_pipe.native_handle(), -1, to_process, SPLICE_F_MORE);
-                sqe->flags |= IOSQE_IO_LINK; // Link only to the START of the broadcast
-                sqe->user_data = 0;
-
-                // BROADCAST BRANCHES (Parallel)
-                for (size_t i = 0; i < output_files.size() - 1; i++)
-                {
-
-                    sqe = io_uring_get_sqe(&ring);
-                    io_uring_prep_tee(sqe, src_read_pipe.native_handle(), dest_write_pipes[i].native_handle(), to_process, 0);
-                    sqe->flags |= IOSQE_IO_LINK;
-                    sqe->user_data = 0;
-
-                    sqe = io_uring_get_sqe(&ring);
-                    io_uring_prep_splice(sqe, dest_read_pipes[i].native_handle(), -1, output_files[i].native_handle(), total_processed, to_process, SPLICE_F_MORE);
-                    sqe->user_data = 0;
-                }
-
-                // FINAL DRAIN (The anchor for this chunk)
+                // TEE: Source Pipe -> Dest Pipe (No offsets)
                 sqe = io_uring_get_sqe(&ring);
-                io_uring_prep_splice(sqe, src_read_pipe.native_handle(), -1, output_files.back().native_handle(), total_processed, to_process, SPLICE_F_MORE);
-                // Mark this as the chunk tracker
-                io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(static_cast<uintptr_t>(to_process)));
+                io_uring_prep_tee(sqe, src_read_pipe.native_handle(),
+                                  dest_write_pipes[i].native_handle(), to_process, 0);
+                sqe->flags |= IOSQE_IO_LINK;
+                sqe->user_data = 0;
+                submissions++;
 
-                total_processed += to_process;
-                in_flight++;
+                // SPLICE: Dest Pipe -> File (Must use file offset)
+                sqe = io_uring_get_sqe(&ring);
+                io_uring_prep_splice(sqe, dest_read_pipes[i].native_handle(), -1,
+                                     output_files[i].native_handle(), total_processed,
+                                     to_process, SPLICE_F_MORE);
+                sqe->flags |= IOSQE_IO_LINK;
+                io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(static_cast<uintptr_t>(to_process)));
+                submissions++;
             }
 
-            // 2. Submit and Reap
-            io_uring_submit_and_wait(&ring, 1);
+            sqe = io_uring_get_sqe(&ring);
+            io_uring_prep_splice(sqe, src_read_pipe.native_handle(), -1,
+                                 output_files.back().native_handle(), total_processed,
+                                 to_process, SPLICE_F_MORE);
+            io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(static_cast<uintptr_t>(to_process)));
+            submissions++;
 
+            total_processed += to_process;
+
+            io_uring_submit_and_wait(&ring, submissions);
             io_uring_cqe *cqe;
             unsigned head;
             int count = 0;
             io_uring_for_each_cqe(&ring, head, cqe)
             {
-                uintptr_t bytes = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
-                if (bytes > 0)
+                uintptr_t data = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
+                if (data > 0)
                 {
                     if (cqe->res >= 0)
-                        total_data_moved += (bytes * output_files.size());
-                    else if (cqe->res < 0)
-                    {
-                        std::println(stderr, "Write failed: {}", strerror(-cqe->res));
-                    }
-                    in_flight--;
+                        total_data_moved += data;
+                    else
+                        std::println(stderr, "Chain Failure: {}", strerror(-cqe->res));
                 }
                 count++;
             }
             io_uring_cq_advance(&ring, count);
         }
 
-        // while (total_processed < file_sz)
-        // {
-        //     to_process = std::min<size_t>(static_cast<size_t>(CHUNK_SIZE), file_sz - total_processed);
-        //     submissions = 0;
-
-        //     // 1. DISK -> SOURCE PIPE (Must use file offset)
-        //     io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-        //     io_uring_prep_splice(sqe, source_file.native_handle(), total_processed,
-        //                          src_write_pipe.native_handle(), -1,
-        //                          to_process, SPLICE_F_MORE);
-        //     sqe->flags |= IOSQE_IO_LINK;
-        //     sqe->user_data = 0;
-        //     submissions++;
-
-        //     // 2. BROADCAST TO N-1 FILES
-        //     for (size_t i = 0; i < output_files.size() - 1; i++)
-        //     {
-        //         // TEE: Source Pipe -> Dest Pipe (No offsets)
-        //         sqe = io_uring_get_sqe(&ring);
-        //         io_uring_prep_tee(sqe, src_read_pipe.native_handle(),
-        //                           dest_write_pipes[i].native_handle(), to_process, 0);
-        //         sqe->flags |= IOSQE_IO_LINK;
-        //         sqe->user_data = 0;
-        //         submissions++;
-
-        //         // SPLICE: Dest Pipe -> File (Must use file offset)
-        //         sqe = io_uring_get_sqe(&ring);
-        //         io_uring_prep_splice(sqe, dest_read_pipes[i].native_handle(), -1,
-        //                              output_files[i].native_handle(), total_processed,
-        //                              to_process, SPLICE_F_MORE);
-        //         sqe->flags |= IOSQE_IO_LINK;
-        //         sqe->user_data = to_process;
-        //         submissions++;
-        //     }
-
-        //     // 3. FINAL SPLICE: SOURCE PIPE -> LAST FILE (Consumes source pipe, uses file offset)
-        //     sqe = io_uring_get_sqe(&ring);
-        //     io_uring_prep_splice(sqe, src_read_pipe.native_handle(), -1,
-        //                          output_files.back().native_handle(), total_processed,
-        //                          to_process, SPLICE_F_MORE);
-        //     // Mark for accounting
-        //     io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(static_cast<uintptr_t>(to_process)));
-        //     submissions++;
-
-        //     total_processed += to_process;
-
-        //     io_uring_submit_and_wait(&ring, submissions);
-        //     io_uring_cqe *cqe;
-        //     unsigned head;
-        //     int count = 0;
-        //     io_uring_for_each_cqe(&ring, head, cqe)
-        //     {
-        //         uintptr_t data = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
-        //         if (data > 0)
-        //         {
-        //             if (cqe->res >= 0)
-        //                 total_data_moved += data;
-        //             else
-        //                 std::println(stderr, "Chain Failure: {}", strerror(-cqe->res));
-        //         }
-        //         count++;
-        //     }
-        //     io_uring_cq_advance(&ring, count);
-        // }
-
         io_uring_queue_exit(&ring);
-        // return total_processed * output_files.size();
         return total_data_moved;
     }
 
 }
+
+// const int BATCH_SIZE = 8; // Number of chunks to keep in the pipeline
+// int in_flight = 0;
+
+// while (total_processed < file_sz || in_flight > 0)
+// {
+
+//     while (in_flight < BATCH_SIZE && total_processed < file_sz)
+//     {
+//         size_t to_process = std::min<size_t>(CHUNK_SIZE, file_sz - total_processed);
+
+//         // 1. DISK -> SRC PIPE
+//         io_uring_sqe *sqe = io_uring_get_sqe(&ring);
+//         io_uring_prep_splice(sqe, source_file.native_handle(), total_processed,
+//                              src_write_pipe.native_handle(), -1, to_process, SPLICE_F_MORE);
+//         sqe->flags |= IOSQE_IO_LINK; // Link only to the START of the broadcast
+//         sqe->user_data = 0;
+
+//         // 2. BROADCAST BRANCHES (Parallel)
+//         for (size_t i = 0; i < output_files.size() - 1; i++)
+//         {
+//             sqe = io_uring_get_sqe(&ring);
+//             io_uring_prep_tee(sqe, src_read_pipe.native_handle(), dest_write_pipes[i].native_handle(), to_process, 0);
+//             sqe->flags |= IOSQE_IO_LINK;
+//             sqe->user_data = 0;
+
+//             sqe = io_uring_get_sqe(&ring);
+//             io_uring_prep_splice(sqe, dest_read_pipes[i].native_handle(), -1, output_files[i].native_handle(), total_processed, to_process, SPLICE_F_MORE);
+//             io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(static_cast<uintptr_t>(to_process)));
+//         }
+
+//                         sqe = io_uring_get_sqe(&ring);
+//         io_uring_prep_splice(sqe, src_read_pipe.native_handle(), -1, output_files.back().native_handle(), total_processed, to_process, SPLICE_F_MORE);
+//         io_uring_sqe_set_data(sqe, reinterpret_cast<void *>(static_cast<uintptr_t>(to_process)));
+
+//         total_processed += to_process;
+//         in_flight++;
+//     }
+
+//     // 2. Submit and Reap
+//     io_uring_submit_and_wait(&ring, 1);
+
+//     io_uring_cqe *cqe;
+//     unsigned head;
+//     int count = 0;
+//     io_uring_for_each_cqe(&ring, head, cqe)
+//     {
+//         uintptr_t bytes = reinterpret_cast<uintptr_t>(io_uring_cqe_get_data(cqe));
+//         if (bytes > 0)
+//         {
+//             if (cqe->res >= 0)
+//                 total_data_moved += static_cast<size_t>(bytes);
+//             else if (cqe->res < 0)
+//             {
+//                 std::println(stderr, "Write failed: {}", strerror(-cqe->res));
+//             }
+//             in_flight--;
+//         }
+//         count++;
+//     }
+//     io_uring_cq_advance(&ring, count);
+// }

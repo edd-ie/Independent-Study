@@ -88,11 +88,15 @@ $(OUT_DIR)/%.o: %.cpp
 #files
 # ./test/test_input.txt
 # ./test/data1.txt
-# ./test/data.txt
+# INPUT ?= ./test/data.txt
 # ./resource/test_data/large_simulation_file.bin
 INPUT ?= ./resource/test_data/large_simulation_file.bin
 THREADS ?= 4
 COPIES ?= 4
+
+TEST_DIR = ./test
+DATA_FILE = $(TEST_DIR)/test_data.txt
+SIZE_MB = 256
 
 # ------------------------------------------------------------
 # Utility Targets
@@ -189,4 +193,26 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 
-.PHONY: all clean format test readv memcheck
+
+
+
+# Generate (SIZE_MB) MB of random data
+data:
+	@mkdir -p $(TEST_DIR)
+	@echo "[Generating $(SIZE_MB)MB Test Data]"
+	dd if=/dev/urandom of=$(DATA_FILE) bs=1M count=$(SIZE_MB) status=progress
+
+# Generate 2GB of random data (for Mode 3/4 stress tests)
+data_large:
+	@mkdir -p $(TEST_DIR)
+	@echo "[Generating 2048MB Test Data]"
+	dd if=/dev/urandom of=$(DATA_FILE) bs=1M count=2048 status=progress
+
+clean_data:
+	rm -f $(DATA_FILE)
+
+
+.PHONY: all clean format test readv memcheck data data_large clean_data
+
+# large file (512MB)
+# dd if=/dev/urandom of=./test/data.txt bs=1M count=512
