@@ -1,11 +1,11 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.22)  5 FEB 2026 13:26
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.3.20)  26 MAR 2026 16:40
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **"./SWE-4913 Research report.tex"
 (SWE-4913 Research report.tex
 LaTeX2e <2025-11-01>
-L3 programming layer <2025-12-29>
+L3 programming layer <2026-01-19>
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
 Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/base\size11.clo
@@ -30,7 +30,7 @@ Package: inputenc 2024/02/08 v1.3d Input encoding file
 )
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.st
 y
-Package: geometry 2020/01/02 v5.9 Page Geometry
+Package: geometry 2026/03/07 v6.0 Page Geometry
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
@@ -185,7 +185,7 @@ LaTeX Info: Redefining \] on input line 2951.
 )
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.st
 y
-Package: hyperref 2025-07-12 v7.01o Hypertext links for LaTeX
+Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.
 sty
@@ -220,7 +220,7 @@ Package pdftexcmds Info: \pdfdraftmode found.
 Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
 )
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
-Package: nameref 2025-06-21 v2.57 Cross-referencing by name of section
+Package: nameref 2026-01-29 v2.58 Cross-referencing by name of section
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.st
 y
@@ -251,7 +251,7 @@ Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 \Hy@pagecounter=\count309
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
-File: pd1enc.def 2025-07-12 v7.01o Hyperref: PDFDocEncoding definition (HO)
+File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
 ... no UTF-8 mapping file for font encoding PD1
 )
@@ -262,24 +262,24 @@ Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 \Hy@SavedSpaceFactor=\count310
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
-File: puenc.def 2025-07-12 v7.01o Hyperref: PDF Unicode definition (HO)
+File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
 ... no UTF-8 mapping file for font encoding PU
 )
-Package hyperref Info: Hyper figures OFF on input line 4195.
-Package hyperref Info: Link nesting OFF on input line 4200.
-Package hyperref Info: Hyper index ON on input line 4203.
-Package hyperref Info: Plain pages OFF on input line 4210.
-Package hyperref Info: Backreferencing OFF on input line 4215.
+Package hyperref Info: Hyper figures OFF on input line 4201.
+Package hyperref Info: Link nesting OFF on input line 4206.
+Package hyperref Info: Hyper index ON on input line 4209.
+Package hyperref Info: Plain pages OFF on input line 4216.
+Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
-Package hyperref Info: Bookmarks ON on input line 4462.
+Package hyperref Info: Bookmarks ON on input line 4468.
 \c@Hy@tempcnt=\count311
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
-LaTeX Info: Redefining \url on input line 4801.
+LaTeX Info: Redefining \url on input line 4807.
 \XeTeXLinkMargin=\dimen173
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
@@ -293,13 +293,13 @@ Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 \Fld@menulength=\count312
 \Field@Width=\dimen174
 \Fld@charsize=\dimen175
-Package hyperref Info: Hyper figures OFF on input line 6078.
-Package hyperref Info: Link nesting OFF on input line 6083.
-Package hyperref Info: Hyper index ON on input line 6086.
-Package hyperref Info: backreferencing OFF on input line 6093.
-Package hyperref Info: Link coloring OFF on input line 6098.
-Package hyperref Info: Link coloring with OCG OFF on input line 6103.
-Package hyperref Info: PDF/A mode OFF on input line 6108.
+Package hyperref Info: Hyper figures OFF on input line 6084.
+Package hyperref Info: Link nesting OFF on input line 6089.
+Package hyperref Info: Hyper index ON on input line 6092.
+Package hyperref Info: backreferencing OFF on input line 6099.
+Package hyperref Info: Link coloring OFF on input line 6104.
+Package hyperref Info: Link coloring with OCG OFF on input line 6109.
+Package hyperref Info: PDF/A mode OFF on input line 6114.
 \Hy@abspage=\count313
 \c@Item=\count314
 \c@Hfootnote=\count315
@@ -307,7 +307,7 @@ Package hyperref Info: PDF/A mode OFF on input line 6108.
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (C:\Users\_edd.ie_\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
-File: hpdftex.def 2025-07-12 v7.01o Hyperref driver for pdfTeX
+File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
 \Fld@listcount=\count316
 \c@bookmark@seq@number=\count317
 
@@ -672,7 +672,7 @@ Use Each and Why It Mat-ters\OT1/cmr/m/n/10.95 .
 [15] (SWE-4913 Research report.aux)
  ***********
 LaTeX2e <2025-11-01>
-L3 programming layer <2025-12-29>
+L3 programming layer <2026-01-19>
  ***********
 
 
@@ -683,13 +683,13 @@ ged.
 (rerunfilecheck)             Checksum: 777A8F2F3B9B94136A19FDEAABDA6781;6802.
  ) 
 Here is how much of TeX's memory you used:
- 12207 strings out of 467870
- 186774 string characters out of 5416903
- 1052610 words of memory out of 5000000
- 40853 multiletter control sequences out of 15000+600000
+ 12207 strings out of 467866
+ 186774 string characters out of 5416861
+ 1052649 words of memory out of 5000000
+ 40858 multiletter control sequences out of 15000+600000
  636181 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,11n,79p,765b,1291s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,79p,790b,1291s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\_edd.ie_\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\t
 crm1095.pk><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/type1/public/
 amsfonts/cm/cmbx10.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts/t
@@ -705,7 +705,7 @@ lic/amsfonts/cm/cmr6.pfb><C:/Users/_edd.ie_/AppData/Local/Programs/MiKTeX/fonts
 KTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/_edd.ie_/AppData/Local
 /Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/_edd.ie_/A
 ppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on "SWE-4913 Research report.pdf" (15 pages, 347838 bytes).
+Output written on "SWE-4913 Research report.pdf" (15 pages, 348005 bytes).
 PDF statistics:
  426 PDF objects out of 1000 (max. 8388607)
  104 named destinations out of 1000 (max. 500000)

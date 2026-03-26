@@ -38,7 +38,7 @@
 	\maketitle
 	
 	\begin{abstract}
-		This research investigates the upper limits of data transfer rates between  two point nodes. The primary objective is to evaluate the impact of different communication protocols, message sizes, and Modular Component Architecture (MCA) tuning on total bandwidth and latency.
+		This research investigates the upper theoretical and practical limits of point-to-point data transfer throughput. While high-level frameworks like the Message Passing Interface (MPI) provide robust abstractions for distributed systems, they often introduce overhead through multiple memory-copy operations and context switching. We evaluate the impact of communication protocols, message sizes, and Modular Component Architecture (MCA) tuning, and propose a high-performance ``Broadcaster'' utilizing Linux io\_uring and zero-copy splice/tee primitives. Our results demonstrate that bypassing the user-space buffer bottleneck allows data transfer rates to approach the physical saturation point of the underlying hardware interconnect
 	\end{abstract}
 	
 	\tableofcontents
